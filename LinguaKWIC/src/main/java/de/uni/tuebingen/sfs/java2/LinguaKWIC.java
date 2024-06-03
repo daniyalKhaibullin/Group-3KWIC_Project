@@ -22,11 +22,11 @@ import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 
 public class LinguaKWIC {
 
+    private static List<String> inputFileToString = new ArrayList<>();// save the Strings from the input file
 
     private String text;
     private String[] sentences;
@@ -63,8 +63,10 @@ public class LinguaKWIC {
     }
 
     /**
-     * Return a List of List with the tokens/words of the text of CorpusBuilder. The first list holds the words of the
-     * first sentence, the second list holds the words of the second sentence and so on.
+     * Return a List of List with the tokens/words of the text of CorpusBuilder. The
+     * first list holds the words of the
+     * first sentence, the second list holds the words of the second sentence and so
+     * on.
      *
      * @return A List of List the tokens/words of the text of the CorpusBuilder.
      */
@@ -73,8 +75,10 @@ public class LinguaKWIC {
     }
 
     /**
-     * Return a List of List with the POS tags of the text of CorpusBuilder. The first list holds the POS tags of the
-     * first sentence, the second list holds the POS tags of the second sentence and so on.
+     * Return a List of List with the POS tags of the text of CorpusBuilder. The
+     * first list holds the POS tags of the
+     * first sentence, the second list holds the POS tags of the second sentence and
+     * so on.
      *
      * @return A List of List with the POS tags of the text of CorpusBuilder.
      */
@@ -83,8 +87,10 @@ public class LinguaKWIC {
     }
 
     /**
-     * Return a List of List with the Lemmas of the text of CorpusBuilder. The first list holds the lemmas of the
-     * first sentence, the second list holds the Lemmas of the second sentence and so on.
+     * Return a List of List with the Lemmas of the text of CorpusBuilder. The first
+     * list holds the lemmas of the
+     * first sentence, the second list holds the Lemmas of the second sentence and
+     * so on.
      *
      * @return A List of List with the Lemmas of the text of CorpusBuilder.
      */
@@ -93,16 +99,17 @@ public class LinguaKWIC {
     }
 
     /**
-     * in this method, we extract the sentences, tokens and postagss and lemmas from the input string
+     * in this method, we extract the sentences, tokens and postagss and lemmas from
+     * the input string
      */
     private void process() {
         // we open the .bin files with try with resources
         try (InputStream sentenceModelIn = new FileInputStream("en-sent.bin");
-             InputStream tokenModelIn = new FileInputStream("en-token.bin");
-             InputStream posModelIn = new FileInputStream("en-pos-maxent.bin");
-             InputStream lemmaModelIn= new FileInputStream("en-lemmatizer.bin")) {
+                InputStream tokenModelIn = new FileInputStream("en-token.bin");
+                InputStream posModelIn = new FileInputStream("en-pos-maxent.bin");
+                InputStream lemmaModelIn = new FileInputStream("en-lemmatizer.bin")) {
 
-            //sentence
+            // sentence
             SentenceModel sentModel = new SentenceModel(sentenceModelIn);
             SentenceDetectorME sentenceDetector = new SentenceDetectorME(sentModel);
             this.sentences = sentenceDetector.sentDetect(getText());
@@ -115,10 +122,9 @@ public class LinguaKWIC {
             POSModel posModel = new POSModel(posModelIn);
             POSTaggerME posTagger = new POSTaggerME(posModel);
 
-            //lemma
+            // lemma
             LemmatizerModel lemmModel = new LemmatizerModel(lemmaModelIn);
             LemmatizerME lemmatizer = new LemmatizerME(lemmModel);
-
 
             this.tokens = new ArrayList<>();
             this.posTags = new ArrayList<>();
@@ -140,6 +146,24 @@ public class LinguaKWIC {
         } catch (Exception e) {
             // we should chenge this part later but for now it is ok
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * convert a file to an arrayList
+     * 
+     * @param filePath
+     */
+    public static void readFile(String filePath) {
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(filePath));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                inputFileToString.add(line);
+            }
+        } catch (IOException e) {
+            e.getStackTrace();
         }
     }
 
