@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 public class LinguaKWIC {
 
-    private static List<String> inputFileToString = new ArrayList<>();// save the Strings from the input file
+    private String inputFileToString;// input file => String
 
     private String text;
     private String[] sentences;
@@ -34,6 +34,13 @@ public class LinguaKWIC {
     private List<List<String>> posTags;
     private List<List<String>> lemmas;
 
+
+    /**
+     * Default constructor
+     */
+    public LinguaKWIC() {
+        process();
+    }
     /**
      * Create a CorpusBuilder which generates POS tags and Lemmas for text.
      *
@@ -154,17 +161,25 @@ public class LinguaKWIC {
      * 
      * @param filePath
      */
-    public static void readFile(String filePath) {
+    public void readFile(String filePath) {
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(filePath));
             String line;
             while ((line = reader.readLine()) != null) {
-                inputFileToString.add(line);
+                inputFileToString += line + " ";
+                text = inputFileToString;
             }
         } catch (IOException e) {
             e.getStackTrace();
         }
+    }
+
+    //just testing whether it works or not, feel free to delete this part
+    public static void main(String[] args) {
+        LinguaKWIC linguaKWIC = new LinguaKWIC();
+        linguaKWIC.readFile("C://Users//tuebi//lab0-ISaySalmonYouSayYes//Group-3//LinguaKWIC//aRandomText.txt");
+        System.out.println(linguaKWIC.getText());
     }
 
 }
