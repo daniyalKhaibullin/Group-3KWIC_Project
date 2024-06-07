@@ -1,4 +1,5 @@
 // this is a junit file if you can it is good to add more tests
+
 import de.uni.tuebingen.sfs.java2.LinguaKWIC;
 import org.junit.Test;
 
@@ -17,7 +18,6 @@ public class LinguaKWICTest {
             "and the Wikipedia slogan in English (\"the free encyclopedia\"), searched against a Wikipedia page, " +
             "might yield a KWIC index as follows. A KWIC index usually uses a wide layout to allow the display of " +
             "maximum 'in context' information (not shown in the following example).";
-
 
 
     @Test
