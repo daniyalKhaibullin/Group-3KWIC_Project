@@ -33,7 +33,11 @@ public class LinguaKWICTest {
                 "For example, a search query including all of the words in an example definition (\"KWIC is an acronym for Key Word In Context, the most common format for concordance lines\") and the Wikipedia slogan in English (\"the free encyclopedia\"), searched against a Wikipedia page, might yield a KWIC index as follows.",
                 "A KWIC index usually uses a wide layout to allow the display of maximum 'in context' information (not shown in the following example)."
         };
-        assertArrayEquals(expectedSentences, linguaKWIC.getSentences());
+        String[] stringArray = new String[linguaKWIC.getSentences().size()];
+        for (int i = 0; i < linguaKWIC.getSentences().size(); i++) {
+            stringArray[i] = linguaKWIC.getSentences().get(i);
+        }
+        assertArrayEquals(expectedSentences, stringArray);
     }
 
     @Test
