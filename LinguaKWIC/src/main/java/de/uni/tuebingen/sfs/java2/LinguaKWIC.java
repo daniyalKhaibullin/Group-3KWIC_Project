@@ -2,6 +2,8 @@
  * V1.0 : in this version the program reads a String as input stream and get the sentences, tokens, postags and lemmas of
  * it. for now, it is working only with english. plan for the next version (v1.1) : instead of getting string as input, get a txt file and read it and do all the things
  * on the txt inside the txt file.
+ * V1.2 : a language detector added and now we can work with both german and english. the presses method now is divided to sub
+ * methods
  * please when ever you make any changes, add the descriptions here:
  */
 
