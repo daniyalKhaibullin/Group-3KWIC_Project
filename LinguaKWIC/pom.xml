@@ -35,6 +35,7 @@
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
+        <!-- for now-->
         <!--        <dependency>-->
 <!--            &lt;!&ndash;  jsoup HTML parser library @ https://jsoup.org/  &ndash;&gt;-->
 <!--            <groupId>org.jsoup</groupId>-->
