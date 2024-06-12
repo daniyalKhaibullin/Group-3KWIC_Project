@@ -3,7 +3,6 @@
  * it. for now, it is working only with english. plan for the next version (v1.1) : instead of getting string as input, get a txt file and read it and do all the things
  * on the txt inside the txt file.
  * please when ever you make any changes, add the descriptions here:
- *
  */
 
 package de.uni.tuebingen.sfs.java2;
@@ -12,6 +11,9 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 
+import opennlp.tools.langdetect.Language;
+import opennlp.tools.langdetect.LanguageDetectorME;
+import opennlp.tools.langdetect.LanguageDetectorModel;
 import opennlp.tools.lemmatizer.LemmatizerME;
 import opennlp.tools.lemmatizer.LemmatizerModel;
 import opennlp.tools.postag.POSModel;
@@ -26,13 +28,17 @@ import java.util.ArrayList;
 
 public class LinguaKWIC {
 
-    private String inputFileToString;// input file => String
 
-    private String text;
-    private String[] sentences;
-    private List<List<String>> tokens;
-    private List<List<String>> posTags;
-    private List<List<String>> lemmas;
+
+    private File fileName; //name of the input file
+    private String text; //context
+    private String lang; // language of text
+
+    private List<String> sentences = new ArrayList<>();  // list of sentences
+    private List<List<String>> tokens = new ArrayList<>(); // list of list of tokens for each sentence
+    private List<List<String>> posTags = new ArrayList<>(); // .... tags
+    private List<List<String>> lemmas = new ArrayList<>(); // lemmas
+
 
 
     /**
@@ -41,13 +47,25 @@ public class LinguaKWIC {
     public LinguaKWIC() {
         process();
     }
+
     /**
-     * Create a CorpusBuilder which generates POS tags and Lemmas for text.
+     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
      *
      * @param text The text which should be annotated.
      */
     public LinguaKWIC(String text) {
         this.text = text;
+        process();
+    }
+
+    /**
+     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+     *
+     * @param fileName The file containing text which should be annotated.
+     */
+    public LinguaKWIC(File fileName) {
+        this.fileName = fileName;
+        readFile(fileName.getAbsolutePath());
         process();
     }
 
@@ -65,7 +83,7 @@ public class LinguaKWIC {
      *
      * @return An array with the sentences of the CorpusBuildr
      */
-    public String[] getSentences() {
+    public List<String> getSentences() {
         return this.sentences;
     }
 
@@ -105,81 +123,120 @@ public class LinguaKWIC {
         return lemmas;
     }
 
+
     /**
-     * in this method, we extract the sentences, tokens and postagss and lemmas from
-     * the input string
+     * Return the language of the text
+     *
+     * @return The language of the text
      */
-    private void process() {
-        // we open the .bin files with try with resources
-        try (InputStream sentenceModelIn = new FileInputStream("en-sent.bin");
-                InputStream tokenModelIn = new FileInputStream("en-token.bin");
-                InputStream posModelIn = new FileInputStream("en-pos-maxent.bin");
-                InputStream lemmaModelIn = new FileInputStream("en-lemmatizer.bin")) {
+    public String getLang() {
+        return this.lang != null && this.lang.length() >= 2 ? this.lang.substring(0, 2) : "en"; // Default to "en" if lang is not properly set
+    }
 
-            // sentence
-            SentenceModel sentModel = new SentenceModel(sentenceModelIn);
-            SentenceDetectorME sentenceDetector = new SentenceDetectorME(sentModel);
-            this.sentences = sentenceDetector.sentDetect(getText());
+    /**
+     * Detect the language of the input text
+     */
+    private void detectLanguage() {
+        try (InputStream detectorModelIn = new FileInputStream("langdetect-183.bin")) {
+            LanguageDetectorModel model = new LanguageDetectorModel(detectorModelIn);
+            LanguageDetectorME languageDetector = new LanguageDetectorME(model);
+            Language bestLanguage = languageDetector.predictLanguage(this.text);
+            this.lang = bestLanguage.getLang();
+        } catch (Exception e) {
+            System.err.println("Error detecting language: " + e.getMessage());
+        }
+    }
 
-            // tokens
-            TokenizerModel tokenModel = new TokenizerModel(tokenModelIn);
-            Tokenizer tokenizer = new TokenizerME(tokenModel);
+    /**
+     * Load NLP models and process the text to extract sentences, tokens, POS tags, and lemmas
+     */
+    private void loadModelsAndProcessText() {
+        String lang = getLang(); // Ensure language is set properly
 
-            // pos
-            POSModel posModel = new POSModel(posModelIn);
-            POSTaggerME posTagger = new POSTaggerME(posModel);
+        try (InputStream sentenceModelIn = new FileInputStream(lang + "/" + lang + "-sent.bin");
+             InputStream tokenModelIn = new FileInputStream(lang + "/" + lang + "-token.bin");
+             InputStream posModelIn = new FileInputStream(lang + "/" + lang + "-pos-maxent.bin");
+             InputStream lemmaModelIn = new FileInputStream(lang + "/" + lang + "-lemmatizer.bin")) {
 
-            // lemma
-            LemmatizerModel lemmModel = new LemmatizerModel(lemmaModelIn);
-            LemmatizerME lemmatizer = new LemmatizerME(lemmModel);
+            SentenceDetectorME sentenceDetector = new SentenceDetectorME(new SentenceModel(sentenceModelIn));
+            Tokenizer tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
+            POSTaggerME posTagger = new POSTaggerME(new POSModel(posModelIn));
+            LemmatizerME lemmatizer = new LemmatizerME(new LemmatizerModel(lemmaModelIn));
 
-            this.tokens = new ArrayList<>();
-            this.posTags = new ArrayList<>();
-            this.lemmas = new ArrayList<>();
+            String[] sentencesArray = sentenceDetector.sentDetect(getText());
+            this.sentences.addAll(Arrays.asList(sentencesArray));
 
-            for (String sentence : getSentences()) {
-                // Tokenize sentence
+            for (String sentence : sentences) {
                 String[] sentenceTokens = tokenizer.tokenize(sentence);
-                this.tokens.add(Arrays.asList(sentenceTokens));
-                // posTag on tokens
+                tokens.add(Arrays.asList(sentenceTokens));
                 String[] tags = posTagger.tag(sentenceTokens);
-                this.posTags.add(Arrays.asList(tags));
-                // Lemmatize tokens
+                posTags.add(Arrays.asList(tags));
                 String[] lemmasArray = lemmatizer.lemmatize(sentenceTokens, tags);
-                this.lemmas.add(Arrays.asList(lemmasArray));
-
+                lemmas.add(Arrays.asList(lemmasArray));
             }
 
         } catch (Exception e) {
-            // we should chenge this part later but for now it is ok
-            e.printStackTrace();
+            System.err.println("Error processing text" + e.getMessage());
         }
     }
 
     /**
      * convert a file to an arrayList
-     * 
+     *
      * @param filePath
      */
     public void readFile(String filePath) {
         BufferedReader reader = null;
+
         try {
             reader = new BufferedReader(new FileReader(filePath));
-            String line;
+            StringBuffer context = new StringBuffer();
+            String line = "";
             while ((line = reader.readLine()) != null) {
-                inputFileToString += line + " ";
-                text = inputFileToString;
+                context.append(line);
             }
-        } catch (IOException e) {
-            e.getStackTrace();
+            this.text = context.toString();
+        } catch (Exception e) {
+            System.err.println("Error opening file" + e.getMessage());
         }
     }
 
-    //just testing whether it works or not, feel free to delete this part
+    /**
+     * in this method, we extract the sentences, tokens and postagss and lemmas from
+     * the input string
+     */
+    private void process() {
+        detectLanguage();
+        if (lang == null) {
+            System.err.println("Language detection failed.");
+            return;
+        }
+
+        // Validate the language. our program for now is only working with english and german
+        if (!getLang().equals("en") && !getLang().equals("de")) {
+            System.err.println("Unsupported language detected. Please provide a text in English or German.");
+            return;
+        }
+
+        loadModelsAndProcessText();
+    }
+
+
+
+    // Just testing whether it works or not, feel free to delete this part
     public static void main(String[] args) {
-        LinguaKWIC linguaKWIC = new LinguaKWIC();
-        linguaKWIC.readFile("C://Users//tuebi//lab0-ISaySalmonYouSayYes//Group-3//LinguaKWIC//aRandomText.txt");
-        System.out.println(linguaKWIC.getText());
+        File file = new File("aRandomText.txt");
+        LinguaKWIC linguaKWIC = new LinguaKWIC(file);
+        System.out.println(linguaKWIC.getSentences());
+        System.out.println(linguaKWIC.getTokens());
+        System.out.println(linguaKWIC.getPosTags());
+        System.out.println(linguaKWIC.getLemmas());
+        System.out.println(linguaKWIC.getLang());
     }
 
 }
+
+
+
+
+
