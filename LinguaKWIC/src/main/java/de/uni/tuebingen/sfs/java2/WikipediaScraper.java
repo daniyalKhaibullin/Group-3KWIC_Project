@@ -14,7 +14,7 @@
  * Version: V1.1
  */
 
-package de.uni.tuebingen.sfs.java2.scraper;
+package de.uni.tuebingen.sfs.java2;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
