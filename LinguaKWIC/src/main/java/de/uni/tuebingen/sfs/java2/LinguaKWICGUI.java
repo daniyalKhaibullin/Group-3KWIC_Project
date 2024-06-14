@@ -6,7 +6,7 @@ import java.io.IOException;
 public class LinguaKWICGUI extends JFrame {
     // Constructor
     public LinguaKWICGUI() {
-        setTitle("Lingua KWIC");
+        setTitle("Lingua KWIC ");
         //the size
         setSize(1200, 1000);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
