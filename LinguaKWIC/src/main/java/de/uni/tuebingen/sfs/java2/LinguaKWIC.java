@@ -4,7 +4,7 @@
  * on the txt inside the txt file.
  * V1.2 : a language detector added and now we can work with both german and english. the presses method now is divided to sub
  * methods
- * V1.3 : add the wikipediaScraper 
+ * V1.3 : add the wikipediaScraper
  * please when ever you make any changes, add the descriptions here:
  */
 
