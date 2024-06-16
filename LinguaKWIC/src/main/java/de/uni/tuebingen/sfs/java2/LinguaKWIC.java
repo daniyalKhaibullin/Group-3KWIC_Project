@@ -237,7 +237,7 @@ public class LinguaKWIC {
 
 
     // Just testing whether it works or not, feel free to delete this part
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         File file = new File("aRandomText.txt");
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
         System.out.println(linguaKWIC.getSentences());
@@ -245,6 +245,13 @@ public class LinguaKWIC {
         System.out.println(linguaKWIC.getPosTags());
         System.out.println(linguaKWIC.getLemmas());
         System.out.println(linguaKWIC.getLang());
+
+        LinguaKWIC linguaKWIC2 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
+        System.out.println(linguaKWIC2.getSentences());
+        System.out.println(linguaKWIC2.getTokens());
+        System.out.println(linguaKWIC2.getPosTags());
+        System.out.println(linguaKWIC2.getLemmas());
+        System.out.println(linguaKWIC2.getLang());
     }
 
 }
