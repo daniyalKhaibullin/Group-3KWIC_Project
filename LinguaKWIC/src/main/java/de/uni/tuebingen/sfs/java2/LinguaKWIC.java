@@ -4,6 +4,7 @@
  * on the txt inside the txt file.
  * V1.2 : a language detector added and now we can work with both german and english. the presses method now is divided to sub
  * methods
+ * V1.3 : add the wikipediaScraper 
  * please when ever you make any changes, add the descriptions here:
  */
 
@@ -11,8 +12,10 @@ package de.uni.tuebingen.sfs.java2;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
 import opennlp.tools.langdetect.Language;
 import opennlp.tools.langdetect.LanguageDetectorME;
 import opennlp.tools.langdetect.LanguageDetectorModel;
@@ -31,16 +34,55 @@ import java.util.ArrayList;
 public class LinguaKWIC {
 
 
-
     private File fileName; //name of the input file
-    private String text; //context
+    /**
+     * -- GETTER --
+     * Returns the url
+     */
+    @Getter
+    private String url; //url to wikipedia
+    /**
+     * -- GETTER --
+     * Returns the text of url
+     */
+    @Getter
+    private String text;
     private String lang; // language of text
+    private String searchTopic;
 
+    /**
+     * -- GETTER --
+     * Return an array with the sentences of the CorpusBuilder
+     */
+    @Getter
     private List<String> sentences = new ArrayList<>();  // list of sentences
+    /**
+     * -- GETTER --
+     * Return a List of List with the tokens/words of the text of CorpusBuilder. The
+     * first list holds the words of the
+     * first sentence, the second list holds the words of the second sentence and so
+     * on.
+     */
+    @Getter
     private List<List<String>> tokens = new ArrayList<>(); // list of list of tokens for each sentence
+    /**
+     * -- GETTER --
+     * Return a List of List with the POS tags of the text of CorpusBuilder. The
+     * first list holds the POS tags of the
+     * first sentence, the second list holds the POS tags of the second sentence and
+     * so on.
+     */
+    @Getter
     private List<List<String>> posTags = new ArrayList<>(); // .... tags
+    /**
+     * -- GETTER --
+     * Return a List of List with the Lemmas of the text of CorpusBuilder. The first
+     * list holds the lemmas of the
+     * first sentence, the second list holds the Lemmas of the second sentence and
+     * so on.
+     */
+    @Getter
     private List<List<String>> lemmas = new ArrayList<>(); // lemmas
-
 
 
     /**
@@ -53,10 +95,13 @@ public class LinguaKWIC {
     /**
      * Create a LinguaKWIC which generates POS tags and Lemmas for text.
      *
-     * @param text The text which should be annotated.
+     * @param url The text which should be annotated.
      */
-    public LinguaKWIC(String text) {
-        this.text = text;
+    public LinguaKWIC(String url) throws IOException {
+        this.url = url;
+        WikipediaScraper scraper = new WikipediaScraper(this.url);
+        List<String> paragraphs = scraper.extractTextByTag("p");
+        this.text = String.join(" ", paragraphs);
         process();
     }
 
@@ -71,59 +116,20 @@ public class LinguaKWIC {
         process();
     }
 
-    /**
-     * Returns the text of this CorpusBuilder
-     *
-     * @return The text of this CorpusBuilder
-     */
-    public String getText() {
-        return this.text;
-    }
-
-    /**
-     * Return an array with the sentences of the CorpusBuilder
-     *
-     * @return An array with the sentences of the CorpusBuildr
-     */
-    public List<String> getSentences() {
-        return this.sentences;
-    }
-
-    /**
-     * Return a List of List with the tokens/words of the text of CorpusBuilder. The
-     * first list holds the words of the
-     * first sentence, the second list holds the words of the second sentence and so
-     * on.
-     *
-     * @return A List of List the tokens/words of the text of the CorpusBuilder.
-     */
-    public List<List<String>> getTokens() {
-        return tokens;
-    }
-
-    /**
-     * Return a List of List with the POS tags of the text of CorpusBuilder. The
-     * first list holds the POS tags of the
-     * first sentence, the second list holds the POS tags of the second sentence and
-     * so on.
-     *
-     * @return A List of List with the POS tags of the text of CorpusBuilder.
-     */
-    public List<List<String>> getPosTags() {
-        return posTags;
-    }
-
-    /**
-     * Return a List of List with the Lemmas of the text of CorpusBuilder. The first
-     * list holds the lemmas of the
-     * first sentence, the second list holds the Lemmas of the second sentence and
-     * so on.
-     *
-     * @return A List of List with the Lemmas of the text of CorpusBuilder.
-     */
-    public List<List<String>> getLemmas() {
-        return lemmas;
-    }
+//    /**
+//     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+//     *
+//     * @param topic The text which should be annotated.
+//     * @param language The text which should be annotated.
+//     */
+//    public LinguaKWIC(String topic, String language) throws IOException {
+//        this.lang = language;
+//        this.searchTopic = topic;
+//        WikipediaScraper scraper = new WikipediaScraper(this.searchTopic,this.lang);
+//        List<String> paragraphs = scraper.extractTextByTag("p");
+//        this.text = String.join(" ", paragraphs);
+//        process();
+//    }
 
 
     /**
@@ -168,13 +174,19 @@ public class LinguaKWIC {
             String[] sentencesArray = sentenceDetector.sentDetect(getText());
             this.sentences.addAll(Arrays.asList(sentencesArray));
 
-            for (String sentence : sentences) {
+            for (String sentence : sentencesArray) {
+
                 String[] sentenceTokens = tokenizer.tokenize(sentence);
-                tokens.add(Arrays.asList(sentenceTokens));
                 String[] tags = posTagger.tag(sentenceTokens);
-                posTags.add(Arrays.asList(tags));
                 String[] lemmasArray = lemmatizer.lemmatize(sentenceTokens, tags);
-                lemmas.add(Arrays.asList(lemmasArray));
+
+                List<String> tokenList = new ArrayList<>(Arrays.asList(sentenceTokens));
+                List<String> posList = new ArrayList<>(Arrays.asList(tags));
+                List<String> lemmaList = new ArrayList<>(Arrays.asList(lemmasArray));
+
+                tokens.add(tokenList);
+                posTags.add(posList);
+                lemmas.add(lemmaList);
             }
 
         } catch (Exception e) {
@@ -192,7 +204,7 @@ public class LinguaKWIC {
 
         try {
             reader = new BufferedReader(new FileReader(filePath));
-            StringBuffer context = new StringBuffer();
+            StringBuilder context = new StringBuilder();
             String line = "";
             while ((line = reader.readLine()) != null) {
                 context.append(line);
@@ -222,7 +234,6 @@ public class LinguaKWIC {
 
         loadModelsAndProcessText();
     }
-
 
 
     // Just testing whether it works or not, feel free to delete this part
