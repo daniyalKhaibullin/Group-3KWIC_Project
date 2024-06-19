@@ -1,23 +1,18 @@
 /**
- * Wikipedia Scraper - class that enables the users to easily
- * interact with JSoup without touching documents, elements, and other
- * complicated tools in JSoup.
- * Created to facilitate scraping Wikipedia pages.
- * OOP based, trivial and relatively easy for experienced Java developers
+ * Wikipedia Scraper - A class that enables users to easily scrape Wikipedia pages using JSoup.
+ * This class abstracts away the complexity of interacting with JSoup documents, elements, etc.
  *
  * Features:
  * - Connect to a Wikipedia page and scrape its contents.
  * - Extract main title and language of the Wikipedia page.
- * - Extract sections of the page including the top section 'mw-content-text'.
+ * - Extract sections of the page including the main content.
  * - Extract text based on specific tags or classes.
  *
- * Changes with V1.2:
- * - Enable Cache Content that can store cache - wikipedia links that previously have been accessed
- * - Clearer section division enabled
- * - Catch excpetions and errors.
- * - Get rid of all the space for unnecessary getters and setters, can be done with lombok, pom.xml changed
- *
- * Version: V1.2.
+ * Version: V1.3
+ * Changes:
+ * - Added a new constructor that takes a topic and language to generate the Wikipedia URL.
+ * - Updated manual and usage instructions.
+ * - Improved error handling for the new constructor.
  */
 
 package de.uni.tuebingen.sfs.java2;
@@ -46,36 +41,60 @@ public class WikipediaScraper {
     private String language;
     @Getter @Setter
     private List<Section> sections;
+
     private static final HashMap<String, CachedContent> cache = new HashMap<>();
 
+    // Constructor initializing the sections list
     public WikipediaScraper() {
         sections = new ArrayList<>();
     }
 
+    // Constructor connecting to a Wikipedia page by URL
     public WikipediaScraper(String url) throws IOException {
         this();
         connectToWikipedia(url);
     }
 
+    // New constructor generating URL from topic and language
+    public WikipediaScraper(String topic, String language) {
+        this();
+        this.url = generateWikipediaURL(topic, language);
+        connectToWikipedia(this.url);
+    }
+
+    /**
+     * Generates a Wikipedia URL from a given topic and language.
+     *
+     * @param topic The topic of the Wikipedia page.
+     * @param language The language code (e.g., "en" for English).
+     * @return The generated Wikipedia URL.
+     */
+    private String generateWikipediaURL(String topic, String language) {
+        return "https://" + language + ".wikipedia.org/wiki/" + topic.replace(" ", "_");
+    }
+
     /**
      * Connects to the specified Wikipedia URL and initiates scraping.
-     * V1.2 - added cacheContent - a hash table of wikipedia links, and its info
+     * Checks cache first to avoid redundant network calls.
      *
      * @param url The URL of the Wikipedia page to scrape.
-     * @throws IOException If an I/O error occurs while connecting to the URL.
      */
     public void connectToWikipedia(String url) {
         this.url = url;
         try {
+            // Check if the URL is already cached and the cache is not expired
             if (cache.containsKey(url) && !cache.get(url).isExpired()) {
+                // Load from cache
                 CachedContent cachedContent = cache.get(url);
                 this.document = cachedContent.getDocument();
                 this.mainTitle = cachedContent.getMainTitle();
                 this.language = cachedContent.getLanguage();
                 this.sections = cachedContent.getSections();
             } else {
+                // Connect and scrape the page if not cached
                 this.document = Jsoup.connect(url).get();
                 scrapeWikipedia();
+                // Store in cache
                 cache.put(url, new CachedContent(document, mainTitle, language, sections));
             }
         } catch (IOException e) {
@@ -85,7 +104,7 @@ public class WikipediaScraper {
 
     /**
      * Scrapes the Wikipedia page for the main title, language, and sections.
-     * V1.2 - added the level of sections to not get confused with the formatting
+     * Extracts content from the 'mw-content-text' section and further divides it into sub-sections.
      */
     private void scrapeWikipedia() {
         if (document != null) {
@@ -107,33 +126,41 @@ public class WikipediaScraper {
             int currentLevel = 1;
 
             for (Element element : sectionElements) {
-                if (element.tagName().equals("h2")) {
-                    currentSection = new Section(element.text(), 2);
-                    sections.add(currentSection);
-                    currentLevel = 2;
-                } else if (element.tagName().equals("h3")) {
-                    currentSection = new Section(element.text(), 3);
-                    sections.add(currentSection);
-                    currentLevel = 3;
-                } else {
-                    if (currentLevel == 1) {
-                        topSection.addParagraph(formatText(element.text()));
-                    } else {
-                        currentSection.addParagraph(formatText(element.text()));
-                    }
+                switch (element.tagName()) {
+                    case "h2":
+                        currentSection = new Section(element.text(), 2);
+                        sections.add(currentSection);
+                        currentLevel = 2;
+                        break;
+                    case "h3":
+                        currentSection = new Section(element.text(), 3);
+                        sections.add(currentSection);
+                        currentLevel = 3;
+                        break;
+                    default:
+                        if (currentLevel == 1) {
+                            topSection.addParagraph(formatText(element.text()));
+                        } else {
+                            currentSection.addParagraph(formatText(element.text()));
+                        }
+                        break;
                 }
             }
         }
     }
 
+    /**
+     * Formats text by replacing multiple consecutive spaces with new lines for readability.
+     *
+     * @param text The text to format.
+     * @return The formatted text.
+     */
     private String formatText(String text) {
-        // Example of formatting: splitting into multiple lines for readability
         return text.replaceAll("(?<!\\n)\\s{2,}", "\n");
     }
 
     /**
-     * Extracts text from the document based on the specified tag.
-     * V1.2 modified extract by tag - works when the document exists to prevent null errors
+     * Extracts text from the document based on the specified HTML tag.
      *
      * @param tag The HTML tag to extract text from.
      * @return A list of text extracted from the specified tag.
@@ -150,7 +177,7 @@ public class WikipediaScraper {
     }
 
     /**
-     * Extracts text from the document based on the specified class.
+     * Extracts text from the document based on the specified HTML class.
      *
      * @param className The HTML class to extract text from.
      * @return A list of text extracted from the specified class.
@@ -168,7 +195,6 @@ public class WikipediaScraper {
 
     /**
      * Converts the scraped content to a StringBuilder for easy representation.
-     * Works with the toString method.
      *
      * @return A StringBuilder representation of the scraped content.
      */
@@ -187,7 +213,9 @@ public class WikipediaScraper {
         return toStringBuilder().toString();
     }
 
-    // Inner class to represent a section
+    /**
+     * Inner class to represent a section of the Wikipedia page.
+     */
     @Getter @Setter
     public static class Section {
         private String title;
@@ -215,6 +243,9 @@ public class WikipediaScraper {
         }
     }
 
+    /**
+     * Inner class to represent cached content of a Wikipedia page.
+     */
     @Getter @Setter
     private static class CachedContent {
         private final Document document;
@@ -223,7 +254,7 @@ public class WikipediaScraper {
         private final List<Section> sections;
         private final long timestamp;
 
-        public CachedContent(Document document, String mainTitle, String language, List<Section> sections){
+        public CachedContent(Document document, String mainTitle, String language, List<Section> sections) {
             this.document = document;
             this.mainTitle = mainTitle;
             this.language = language;
@@ -231,42 +262,116 @@ public class WikipediaScraper {
             this.timestamp = System.currentTimeMillis();
         }
 
-        //for timestamps, and to not clog the cache, so that it cleans itself
-        public boolean isExpired(){
+        /**
+         * Checks if the cached content is expired (older than one hour).
+         *
+         * @return true if the content is expired, false otherwise.
+         */
+        public boolean isExpired() {
             final long ONE_HOUR = 60 * 60 * 1000;
             return (System.currentTimeMillis() - timestamp) > ONE_HOUR;
         }
     }
 
+    /**
+     * Main method for running the WikipediaScraper.
+     * This provides a simple interface to interact with the scraper via console input.
+     */
     public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Enter the title of the Wikipedia page:");
-            String mainTitle = scanner.nextLine();
-            System.out.println("Enter the language of the Wikipedia page (e.g., en for English):");
-            String language = scanner.nextLine();
-            String url = "https://" + language + ".wikipedia.org/wiki/" + mainTitle.replace(" ", "_");
+        Scanner scanner = new Scanner(System.in);
+        boolean stop = false;
+        while (!stop) {
+            System.out.println("Welcome to Wikipedia Scraper:");
+            try {
+                System.out.println("Enter the title of the Wikipedia page:");
+                String mainTitle = scanner.nextLine();
+                System.out.println("Enter the language of the Wikipedia page (e.g., en for English):");
+                String language = scanner.nextLine();
+                String url = "https://" + language + ".wikipedia.org/wiki/" + mainTitle.replace(" ", "_");
 
-            WikipediaScraper scraper = new WikipediaScraper(url);
-            System.out.println(scraper);
+                WikipediaScraper scraper = new WikipediaScraper(url);
+                System.out.println(scraper);
 
-            // Example of extracting text by tag
-            System.out.println("Extracted paragraphs:");
-            List<String> paragraphs = scraper.extractTextByTag("p");
-            for (String paragraph : paragraphs) {
-                System.out.println(paragraph);
+                // Example of extracting text by tag
+                System.out.println("Extracted paragraphs:");
+                List<String> paragraphs = scraper.extractTextByTag("p");
+                for (String paragraph : paragraphs) {
+                    System.out.println(paragraph);
+                }
+
+                // Example of extracting text by class
+                System.out.println("Extracted elements by class 'mw-headline':");
+                List<String> elementsByClass = scraper.extractTextByClass("mw-headline");
+                for (String text : elementsByClass) {
+                    System.out.println(text);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            // Example of extracting text by class
-            System.out.println("Extracted elements by class 'mw-headline':");
-            List<String> elementsByClass = scraper.extractTextByClass("mw-headline");
-            for (String text : elementsByClass) {
-                System.out.println(text);
+            System.out.println("Do you want to continue: (y/n)");
+            String response = scanner.nextLine();
+            if (response.equals("n")) {
+                stop = true;
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
 
+/**
+ * Usage Manual:
+ *
+ * This manual provides a step-by-step guide to using the WikipediaScraper class effectively.
+ *
+ * 1. **Initialization**:
+ *    - Create an instance of the WikipediaScraper class.
+ *      Example: `WikipediaScraper scraper = new WikipediaScraper();`
+ *
+ * 2. **Connecting to a Wikipedia Page**:
+ *    - Use the `connectToWikipedia(String url)` method to connect to a Wikipedia page.
+ *      Example: `scraper.connectToWikipedia("https://en.wikipedia.org/wiki/OpenAI");`
+ *
+ * 3. **Using the New Constructor**:
+ *    - Use the new constructor that takes a topic and language to generate the URL automatically.
+ *      Example: `WikipediaScraper scraper = new WikipediaScraper("OpenAI", "en");`
+ *
+ * 4. **Caching**:
+ *    - The scraper uses a cache to store previously accessed Wikipedia pages to improve efficiency.
+ *    - To make use of the cache, ensure that you keep the WikipediaScraper instance running and reuse it for multiple requests.
+ *    - If the same URL is accessed within an hour, the cached content will be used instead of making a new network request.
+ *
+ * 5. **Extracting Main Title and Language**:
+ *    - Access the `mainTitle` and `language` properties to get the main title and language of the Wikipedia page.
+ *      Example: `String title = scraper.getMainTitle();`
+ *
+ * 6. **Extracting Sections**:
+ *    - The `sections` property contains a list of Section objects representing different sections of the Wikipedia page.
+ *    - Each Section object has a title and a list of paragraphs.
+ *      Example:
+ *      ```
+ *      for (Section section : scraper.getSections()) {
+ *          System.out.println(section.getTitle());
+ *          for (String paragraph : section.getParagraphs()) {
+ *              System.out.println(paragraph);
+ *          }
+ *      }
+ *      ```
+ *
+ * 7. **Extracting Text by Tag**:
+ *    - Use the `extractTextByTag(String tag)` method to extract text based on HTML tags.
+ *      Example: `List<String> paragraphs = scraper.extractTextByTag("p");`
+ *
+ * 8. **Extracting Text by Class**:
+ *    - Use the `extractTextByClass(String className)` method to extract text based on HTML classes.
+ *      Example: `List<String> elementsByClass = scraper.extractTextByClass("mw-headline");`
+ *
+ * 9. **Full Text Representation**:
+ *    - Use the `toStringBuilder()` method to get a StringBuilder representation of the scraped content.
+ *      Example: `StringBuilder content = scraper.toStringBuilder();`
+ *
+ * 10. **Error Handling**:
+ *    - The scraper catches IOExceptions and prints error messages to the console.
+ *    - Ensure you handle any potential exceptions in your implementation.
+ *
+ * By following these steps, you can effectively use the WikipediaScraper class to scrape and extract content from Wikipedia pages.
+ */
