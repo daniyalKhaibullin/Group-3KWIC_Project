@@ -2,15 +2,17 @@
  * V1.0 : in this version the program reads a String as input stream and get the sentences, tokens, postags and lemmas of
  * it. for now, it is working only with english. plan for the next version (v1.1) : instead of getting string as input, get a txt file and read it and do all the things
  * on the txt inside the txt file.
- * V1.2 : a language detector added and now we can work with both german and english. the presses method now is divided to sub
+ * V1.2 : a language detector added, and now we can work with both german and english. the presses method now is divided to sub
  * methods
  * V1.3 : add the wikipediaScraper
- * please when ever you make any changes, add the descriptions here:
+ * V1.4 : adding some more helper methods and creating a TextSearch object for the future purposes
  */
 
 package de.uni.tuebingen.sfs.java2;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +48,9 @@ public class LinguaKWIC {
      * Returns the text of url
      */
     @Getter
-    private String text;
+    private String text; //content of the text that we want to do the analysis on it
     private String lang; // language of text
-    private String searchTopic;
+    private String searchTopic; // the topic that we want to search in wikipedia- for bonus version
 
     /**
      * -- GETTER --
@@ -84,13 +86,8 @@ public class LinguaKWIC {
     @Getter
     private List<List<String>> lemmas = new ArrayList<>(); // lemmas
 
+    public TextSearch textSearch;
 
-    /**
-     * Default constructor
-     */
-    public LinguaKWIC() {
-        process();
-    }
 
     /**
      * Create a LinguaKWIC which generates POS tags and Lemmas for text.
@@ -100,8 +97,21 @@ public class LinguaKWIC {
     public LinguaKWIC(String url) throws IOException {
         this.url = url;
         WikipediaScraper scraper = new WikipediaScraper(this.url);
-        List<String> paragraphs = scraper.extractTextByTag("p");
-        this.text = String.join(" ", paragraphs);
+        getTextUrl(scraper);
+        process();
+    }
+
+    /**
+     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+     *
+     * @param topic    The text which should be annotated.
+     * @param language The text which should be annotated.
+     */
+    public LinguaKWIC(String topic, String language) throws IOException {
+        this.lang = language;
+        this.searchTopic = topic;
+        WikipediaScraper scraper = new WikipediaScraper(this.searchTopic, this.lang);
+        getTextUrl(scraper);
         process();
     }
 
@@ -116,21 +126,16 @@ public class LinguaKWIC {
         process();
     }
 
-//    /**
-//     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
-//     *
-//     * @param topic The text which should be annotated.
-//     * @param language The text which should be annotated.
-//     */
-//    public LinguaKWIC(String topic, String language) throws IOException {
-//        this.lang = language;
-//        this.searchTopic = topic;
-//        WikipediaScraper scraper = new WikipediaScraper(this.searchTopic,this.lang);
-//        List<String> paragraphs = scraper.extractTextByTag("p");
-//        this.text = String.join(" ", paragraphs);
-//        process();
-//    }
 
+    /**
+     * saving the text with tag p from the url to our text
+     *
+     * @param scraper our scraper object
+     */
+    private void getTextUrl(WikipediaScraper scraper) {
+        List<String> paragraphs = scraper.extractTextByTag("p");
+        this.text = String.join(" ", paragraphs);
+    }
 
     /**
      * Return the language of the text
@@ -145,7 +150,7 @@ public class LinguaKWIC {
      * Detect the language of the input text
      */
     private void detectLanguage() {
-        try (InputStream detectorModelIn = new FileInputStream("langdetect-183.bin")) {
+        try (InputStream detectorModelIn = Files.newInputStream(Paths.get("langdetect-183.bin"))) {
             LanguageDetectorModel model = new LanguageDetectorModel(detectorModelIn);
             LanguageDetectorME languageDetector = new LanguageDetectorME(model);
             Language bestLanguage = languageDetector.predictLanguage(this.text);
@@ -161,10 +166,10 @@ public class LinguaKWIC {
     private void loadModelsAndProcessText() {
         String lang = getLang(); // Ensure language is set properly
 
-        try (InputStream sentenceModelIn = new FileInputStream(lang + "/" + lang + "-sent.bin");
-             InputStream tokenModelIn = new FileInputStream(lang + "/" + lang + "-token.bin");
-             InputStream posModelIn = new FileInputStream(lang + "/" + lang + "-pos-maxent.bin");
-             InputStream lemmaModelIn = new FileInputStream(lang + "/" + lang + "-lemmatizer.bin")) {
+        try (InputStream sentenceModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-sent.bin"));
+             InputStream tokenModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-token.bin"));
+             InputStream posModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-pos-maxent.bin"));
+             InputStream lemmaModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-lemmatizer.bin"))) {
 
             SentenceDetectorME sentenceDetector = new SentenceDetectorME(new SentenceModel(sentenceModelIn));
             Tokenizer tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
@@ -192,6 +197,13 @@ public class LinguaKWIC {
         } catch (Exception e) {
             System.err.println("Error processing text" + e.getMessage());
         }
+    }
+
+    /**
+     * creating a TextSearch object out of our text
+     */
+    private void getReadyToSearch() {
+        this.textSearch = new TextSearch(getTokens(), getPosTags(), getLemmas());
     }
 
     /**
@@ -233,6 +245,7 @@ public class LinguaKWIC {
         }
 
         loadModelsAndProcessText();
+        getReadyToSearch();
     }
 
 
