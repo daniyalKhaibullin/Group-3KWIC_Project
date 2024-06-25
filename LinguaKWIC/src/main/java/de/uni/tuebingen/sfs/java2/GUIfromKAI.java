@@ -18,6 +18,9 @@ public class GUIfromKAI extends JFrame {
     JTextArea textStatistics;
     JTextArea searchWord;
     JTextArea result;
+    JCheckBox exactWordCheckBox;
+    JCheckBox wordLemmaCheckBox;
+    JCheckBox wordPOSTagCheckBox;
 
 
     // Constructor
@@ -64,18 +67,18 @@ public class GUIfromKAI extends JFrame {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
 
-        JCheckBox exactWordCheckBox = new JCheckBox("Exact word");
+        exactWordCheckBox = new JCheckBox("Exact word");
         exactWordCheckBox.setFont(customFont);
         add(exactWordCheckBox, gbc);
         exactWordCheckBox.addItemListener(new exactWordCheckBoxHandler());
 
-        JCheckBox wordLemmaCheckBox = new JCheckBox("Word lemma");
+        wordLemmaCheckBox = new JCheckBox("Word lemma");
         wordLemmaCheckBox.setFont(customFont);
         gbc.gridx = 1;
         add(wordLemmaCheckBox, gbc);
         wordLemmaCheckBox.addItemListener(new wordLemmaCheckBoxHandler());
 
-        JCheckBox wordPOSTagCheckBox = new JCheckBox("Word POS Tag");
+        wordPOSTagCheckBox = new JCheckBox("Word POS Tag");
         wordPOSTagCheckBox.setFont(customFont);
         gbc.gridx = 2;
         add(wordPOSTagCheckBox, gbc);
@@ -217,6 +220,7 @@ public class GUIfromKAI extends JFrame {
             int response = fileChooser.showOpenDialog(null);
             if (response == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
+                fileField.setText(file.getName());
             }
         }
     }
@@ -232,6 +236,20 @@ public class GUIfromKAI extends JFrame {
                 } catch (Exception t) {
                     t.getStackTrace();
                 }
+
+                //if exactWordCheckBox is selected, run the following search
+                if(exactWordCheckBox.isSelected()){
+                  //stab
+                }
+                //if wordLemmaCheckBox is selected, run the following search
+                if(wordLemmaCheckBox.isSelected()){
+                    //stab
+                }
+                //if wordPOSTagCheckBox is selected, run the following search
+                if(wordPOSTagCheckBox.isSelected()){
+                    //stab
+                }
+
             }
 
             //run the search from the LingualKWIC
