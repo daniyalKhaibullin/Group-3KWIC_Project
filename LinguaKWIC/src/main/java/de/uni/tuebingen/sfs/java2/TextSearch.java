@@ -6,10 +6,14 @@
 
 package de.uni.tuebingen.sfs.java2;
 
+import lombok.Getter;
+
+import java.io.Serializable;
 import java.util.*;
 
 
-public class TextSearch {
+public class TextSearch implements Serializable {
+    private static final long serialVersionUID = 42L;
     // Map to store tokens, posTag and lemma as keys and lists of indices as values
     // map a string to a list of integers which are the index position of the sentence that has that string
     private final Map<String, List<Pair>> tokenIndex = new HashMap<>();
@@ -132,8 +136,22 @@ public class TextSearch {
     /**
      * A helper class to store a pair of indices: sentence index and token index.
      */
-    public static class Pair {
+    @Getter
+    public static class Pair implements Serializable {
+        private static final long serialVersionUID = 42L;
+        /**
+         * -- GETTER --
+         * Gets the sentence index.
+         *
+         * @return The index of the sentence
+         */
         private final int sentenceIndex;
+        /**
+         * -- GETTER --
+         * Gets the token index.
+         *
+         * @return The index of the token within the sentence
+         */
         private final int tokenIndex;
 
         /**
@@ -145,24 +163,6 @@ public class TextSearch {
         public Pair(int sentenceIndex, int tokenIndex) {
             this.sentenceIndex = sentenceIndex;
             this.tokenIndex = tokenIndex;
-        }
-
-        /**
-         * Gets the sentence index.
-         *
-         * @return The index of the sentence
-         */
-        public int getSentenceIndex() {
-            return sentenceIndex;
-        }
-
-        /**
-         * Gets the token index.
-         *
-         * @return The index of the token within the sentence
-         */
-        public int getTokenIndex() {
-            return tokenIndex;
         }
 
         @Override

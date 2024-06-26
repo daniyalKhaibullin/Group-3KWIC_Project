@@ -6,16 +6,16 @@
  * methods
  * V1.3 : add the wikipediaScraper
  * V1.4 : adding some more helper methods and creating a TextSearch object for the future purposes
+ * V1.5 : add the cache and making the search for repeated url faster.
  */
-
 package de.uni.tuebingen.sfs.java2;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
@@ -32,95 +32,59 @@ import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 
-import java.util.ArrayList;
+@Getter
+public class LinguaKWIC implements Serializable {
 
-public class LinguaKWIC {
+    private static final long serialVersionUID = 42L;
+    private static final String CACHE_DIR = "cache/";
 
+    private File fileName;
+    private URL url;
+    private String text;
+    private String lang;
+    private String searchTopic;
 
-    private File fileName; //name of the input file
-    /**
-     * -- GETTER --
-     * Returns the url
-     */
-    @Getter
-    private URL url; //url to wikipedia
-    /**
-     * -- GETTER --
-     * Returns the text of url
-     */
-    @Getter
-    private String text; //content of the text that we want to do the analysis on it
-    private String lang; // language of text
-    private String searchTopic; // the topic that we want to search in wikipedia- for bonus version
-
-    /**
-     * -- GETTER --
-     * Return an array with the sentences of the CorpusBuilder
-     */
-    @Getter
-    private List<String> sentences = new ArrayList<>();  // list of sentences
-    /**
-     * -- GETTER --
-     * Return a List of List with the tokens/words of the text of CorpusBuilder. The
-     * first list holds the words of the
-     * first sentence, the second list holds the words of the second sentence and so
-     * on.
-     */
-    @Getter
-    private List<List<String>> tokens = new ArrayList<>(); // list of list of tokens for each sentence
-    /**
-     * -- GETTER --
-     * Return a List of List with the POS tags of the text of CorpusBuilder. The
-     * first list holds the POS tags of the
-     * first sentence, the second list holds the POS tags of the second sentence and
-     * so on.
-     */
-    @Getter
-    private List<List<String>> posTags = new ArrayList<>(); // .... tags
-    /**
-     * -- GETTER --
-     * Return a List of List with the Lemmas of the text of CorpusBuilder. The first
-     * list holds the lemmas of the
-     * first sentence, the second list holds the Lemmas of the second sentence and
-     * so on.
-     */
-    @Getter
-    private List<List<String>> lemmas = new ArrayList<>(); // lemmas
-
-    @Getter
+    private List<String> sentences = new ArrayList<>();
+    private List<List<String>> tokens = new ArrayList<>();
+    private List<List<String>> posTags = new ArrayList<>();
+    private List<List<String>> lemmas = new ArrayList<>();
     private TextSearch textSearch;
 
-
     /**
-     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+     * Constructs a LinguaKWIC object from a URL, extracting and processing text content.
      *
-     * @param url The text which should be annotated.
+     * @param url The URL from which text content will be extracted and processed.
+     * @throws IOException If there is an error in accessing or processing the URL content.
      */
     public LinguaKWIC(String url) throws IOException {
         this.url = new URL(url);
         WikipediaScraper scraper = new WikipediaScraper(this.url.toString());
-        getTextUrl(scraper);
-        process();
+        if (!loadFromCache()) {
+            getTextFromUrl(scraper);
+            process();
+            saveToCache();
+        }
     }
 
     /**
-     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+     * Constructs a LinguaKWIC object using a search topic and language, extracting and processing Wikipedia content.
      *
-     * @param topic    The text which should be annotated.
-     * @param language The text which should be annotated.
+     * @param topic    The search topic or article title to extract and process from Wikipedia.
+     * @param language The language of the Wikipedia article (e.g., "en" for English, "de" for German).
+     * @throws IOException If there is an error in accessing or processing the Wikipedia content.
      */
     public LinguaKWIC(String topic, String language) throws IOException {
-        this.lang = language;
         this.searchTopic = topic;
+        this.lang = language;
         WikipediaScraper scraper = new WikipediaScraper(this.searchTopic, this.lang);
-        getTextUrl(scraper);
+        getTextFromUrl(scraper);
         process();
     }
 
     /**
-     * Create a LinguaKWIC which generates POS tags and Lemmas for text.
+     * Constructs a LinguaKWIC object from a local file, reading and processing its content.
      *
-     * @param fileName The file containing text which should be annotated.
+     * @param fileName The local file containing text content to be processed.
      */
     public LinguaKWIC(File fileName) {
         this.fileName = fileName;
@@ -128,28 +92,82 @@ public class LinguaKWIC {
         process();
     }
 
+    /**
+     * Generates a cache file name based on the source (URL, file name, or search topic).
+     *
+     * @return The cache file name.
+     */
+    private String generateCacheFileName() {
+        String source = url != null ? url.toString() : (fileName != null ? fileName.getAbsolutePath() : searchTopic + "-" + lang);
+        return CACHE_DIR + source.hashCode() + ".ser";
+    }
 
     /**
-     * saving the text with tag p from the url to our text
-     *
-     * @param scraper our scraper object
+     * Saves the current state of the LinguaKWIC object to a cache file.
      */
-    private void getTextUrl(WikipediaScraper scraper) {
+    private void saveToCache() {
+        String cacheFileName = generateCacheFileName();
+        File cacheDir = new File(CACHE_DIR);
+        if (!cacheDir.exists()) {
+            cacheDir.mkdirs();
+        }
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(cacheFileName))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            System.err.println("Error saving to cache: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Loads the state of a LinguaKWIC object from a cache file if available.
+     *
+     * @return true if the cache file was successfully loaded, false otherwise.
+     */
+    private boolean loadFromCache() {
+        String cacheFileName = generateCacheFileName();
+        File cacheFile = new File(cacheFileName);
+        if (!cacheFile.exists()) {
+            return false;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(cacheFile))) {
+            LinguaKWIC cachedData = (LinguaKWIC) ois.readObject();
+            this.text = cachedData.text;
+            this.lang = cachedData.lang;
+            this.sentences = cachedData.sentences;
+            this.tokens = cachedData.tokens;
+            this.posTags = cachedData.posTags;
+            this.lemmas = cachedData.lemmas;
+            this.textSearch = cachedData.textSearch;
+            return true;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error loading from cache: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Extracts text from a URL using a Wikipedia scraper.
+     *
+     * @param scraper The Wikipedia scraper instance.
+     */
+    private void getTextFromUrl(WikipediaScraper scraper) {
         List<String> paragraphs = scraper.extractTextByTag("p");
         this.text = String.join(" ", paragraphs);
     }
 
     /**
-     * Return the language of the text
+     * Returns the language of the text.
      *
-     * @return The language of the text
+     * @return The language code (e.g., "en", "de").
      */
     public String getLang() {
         return this.lang != null && this.lang.length() >= 2 ? this.lang.substring(0, 2) : "en"; // Default to "en" if lang is not properly set
     }
 
     /**
-     * Detect the language of the input text
+     * Detects the language of the input text.
      */
     private void detectLanguage() {
         try (InputStream detectorModelIn = Files.newInputStream(Paths.get("langdetect-183.bin"))) {
@@ -163,7 +181,7 @@ public class LinguaKWIC {
     }
 
     /**
-     * Load NLP models and process the text to extract sentences, tokens, POS tags, and lemmas
+     * Loads NLP models and processes the text to extract sentences, tokens, POS tags, and lemmas.
      */
     private void loadModelsAndProcessText() {
         String lang = getLang(); // Ensure language is set properly
@@ -202,36 +220,28 @@ public class LinguaKWIC {
     }
 
     /**
-     * creating a TextSearch object out of our text
+     * Creates a TextSearch object based on the processed text data.
      */
-    private void getReadyToSearch() {
+    private void createTextSearchObject() {
         this.textSearch = new TextSearch(getTokens(), getPosTags(), getLemmas());
     }
 
     /**
-     * convert a file to an arrayList
+     * Reads a file and sets its content to the text field.
      *
-     * @param filePath
+     * @param filePath The path of the file to read.
      */
     public void readFile(String filePath) {
-        BufferedReader reader = null;
-
         try {
-            reader = new BufferedReader(new FileReader(filePath));
-            StringBuilder context = new StringBuilder();
-            String line = "";
-            while ((line = reader.readLine()) != null) {
-                context.append(line);
-            }
-            this.text = context.toString();
-        } catch (Exception e) {
-            System.err.println("Error opening file" + e.getMessage());
+            byte[] bytes = Files.readAllBytes(Paths.get(filePath));
+            this.text = new String(bytes);
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
         }
     }
 
     /**
-     * in this method, we extract the sentences, tokens and postagss and lemmas from
-     * the input string
+     * Processes the text content to extract sentences, tokens, POS tags, and lemmas.
      */
     private void process() {
         detectLanguage();
@@ -240,22 +250,25 @@ public class LinguaKWIC {
             return;
         }
 
-        // Validate the language. our program for now is only working with english and german
+        // Validate the language. Our program for now is only working with English and German
         if (!getLang().equals("en") && !getLang().equals("de")) {
             System.err.println("Unsupported language detected. Please provide a text in English or German.");
             return;
         }
 
         loadModelsAndProcessText();
-        getReadyToSearch();
+        createTextSearchObject();
     }
 
-
-    // Just testing whether it works or not, feel free to delete this part
+    // Testing the class functionalities (feel free to remove this in production)
     public static void main(String[] args) throws IOException {
         File file = new File("aRandomText.txt");
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
+<<<<<<< HEAD
         System.out.println(linguaKWIC.getSentences());
+=======
+//        System.out.println(linguaKWIC.getSentences());
+>>>>>>> b16b7cb76ccf0077590fc1d78dae4c235c42881f
 //        System.out.println(linguaKWIC.getTokens());
 //        System.out.println(linguaKWIC.getPosTags());
 //        System.out.println(linguaKWIC.getLemmas());
@@ -263,17 +276,20 @@ public class LinguaKWIC {
         List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne");
         System.out.println("Search results for 'Sonne': " + results);
 
-//        LinguaKWIC linguaKWIC2 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
-//        System.out.println(linguaKWIC2.getSentences());
-//        System.out.println(linguaKWIC2.getTokens());
-//        System.out.println(linguaKWIC2.getPosTags());
-//        System.out.println(linguaKWIC2.getLemmas());
-//        System.out.println(linguaKWIC2.getLang());
+        long startTime = System.currentTimeMillis();
+        LinguaKWIC linguaKWIC2 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
+        System.out.println(linguaKWIC2.getSentences());
+        System.out.println(linguaKWIC2.getTokens());
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+        System.out.println("Execution time: " + duration + " milliseconds");
+
+        long startTime2 = System.currentTimeMillis();
+        LinguaKWIC linguaKWIC3 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
+        System.out.println(linguaKWIC3.getSentences());
+        System.out.println(linguaKWIC3.getTokens());
+        long endTime2 = System.currentTimeMillis();
+        long duration2 = endTime2 - startTime2;
+        System.out.println("Execution time: " + duration2 + " milliseconds");
     }
-
 }
-
-
-
-
-
