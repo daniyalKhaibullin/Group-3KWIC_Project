@@ -2,12 +2,20 @@ package de.uni.tuebingen.sfs.java2;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+
 
 public class GUIfromKAI extends JFrame {
     //temporal fileSaver
@@ -17,7 +25,7 @@ public class GUIfromKAI extends JFrame {
     JTextField neighborsField2;
     JTextArea textStatistics;
     JTextArea searchWord;
-    JTextArea result;
+    static JTextArea result;
     JCheckBox exactWordCheckBox;
     JCheckBox wordLemmaCheckBox;
     JCheckBox wordPOSTagCheckBox;
@@ -36,7 +44,6 @@ public class GUIfromKAI extends JFrame {
         getContentPane().setBackground(new Color(230, 230, 250));
         initializeComponents();
         Font customFont = new Font("Serif", Font.PLAIN, 14);
-        ;
         JLabel fileLabel = new JLabel("File:");
         fileLabel.setFont(customFont);
         gbc.gridx = 0;
@@ -72,6 +79,7 @@ public class GUIfromKAI extends JFrame {
         add(exactWordCheckBox, gbc);
         exactWordCheckBox.addItemListener(new exactWordCheckBoxHandler());
 
+        //KAI new change
         wordLemmaCheckBox = new JCheckBox("Word lemma");
         wordLemmaCheckBox.setFont(customFont);
         gbc.gridx = 1;
@@ -141,8 +149,11 @@ public class GUIfromKAI extends JFrame {
         gbc.gridwidth = 1;
         add(caseSensitiveCheckBox, gbc);
 
+        //KAI new change
         result = new JTextArea();
-        result.setFont(customFont);
+        result.setEditable(false);
+//        result.setFont(customFont);
+        result.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane recentScrollPane = new JScrollPane(result);
         gbc.gridx = 1;
         gbc.gridy = 5;
@@ -174,7 +185,7 @@ public class GUIfromKAI extends JFrame {
 
     }
 
-    private class exactWordCheckBoxHandler implements ItemListener{
+    private class exactWordCheckBoxHandler implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
             // Check if the checkbox is selected
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -185,9 +196,9 @@ public class GUIfromKAI extends JFrame {
         }
     }
 
-    private class wordLemmaCheckBoxHandler implements ItemListener{
+    private class wordLemmaCheckBoxHandler implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
-            // Check if the checkbox is selected
+            JCheckBox wordLemmaCheckBox = (JCheckBox) e.getSource();
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 System.out.println("Checkbox is selected");
             } else {
@@ -196,7 +207,7 @@ public class GUIfromKAI extends JFrame {
         }
     }
 
-    private class wordPOSTagCheckBoxHandler implements ItemListener{
+    private class wordPOSTagCheckBoxHandler implements ItemListener {
         public void itemStateChanged(ItemEvent e) {
             // Check if the checkbox is selected
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -228,37 +239,48 @@ public class GUIfromKAI extends JFrame {
     private class searchButtonHandler implements ActionListener {
 
         public void actionPerformed(ActionEvent e) {
-            //get file according to the fileField
-            String filePath = fileField.getText();
-            if (filePath != null && !file.exists()) {
+            LinguaKWIC linguaKWIC = null;
+            String filePathOrLink = fileField.getText();
+            if (isValidURL(filePathOrLink)) {
                 try {
-                    file = new File(filePath);
+                    linguaKWIC = new LinguaKWIC(filePathOrLink);
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+            } else if (filePathOrLink != null && new File(filePathOrLink).exists()) {
+                try {
+                    linguaKWIC = new LinguaKWIC(new File(filePathOrLink));
                 } catch (Exception t) {
-                    t.getStackTrace();
+                    t.printStackTrace();
                 }
-
-                //if exactWordCheckBox is selected, run the following search
-                if(exactWordCheckBox.isSelected()){
-                  //stab
-                }
-                //if wordLemmaCheckBox is selected, run the following search
-                if(wordLemmaCheckBox.isSelected()){
-                    //stab
-                }
-                //if wordPOSTagCheckBox is selected, run the following search
-                if(wordPOSTagCheckBox.isSelected()){
-                    //stab
-                }
-
             }
 
+            if (linguaKWIC == null) {
+                JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+
+            List<List<String>> Sentences = linguaKWIC.getTokens();
+            List<List<String>> lemmas = linguaKWIC.getLemmas();
+            List<List<String>> posTags = linguaKWIC.getPosTags();
+            showAlignedLists(Sentences, lemmas, posTags);
+            
+            if (wordLemmaCheckBox.isSelected()) {
+                highlightWord(searchWord.getText(), Color.red);
+            }
+            if (wordPOSTagCheckBox.isSelected()) {
+                highlightWord(searchWord.getText(), Color.red);
+            }
+            if (exactWordCheckBox.isSelected()) {
+                searchWord.getText();
+            }
+
+
             //run the search from the LingualKWIC
-            LinguaKWIC linguaKWIC = new LinguaKWIC(file);
+//            LinguaKWIC linguaKWIC = new LinguaKWIC(file);
             neighborsField1.setText("hi I'm neighborsField1");
             neighborsField2.setText("hi I'm neighborsField2");
-            searchWord.setText("hi I'm searchWord");
-            result.setText("Hi, I'm the result");
-
 
 
         }
@@ -267,6 +289,52 @@ public class GUIfromKAI extends JFrame {
     private void initializeComponents() {
 
 
+    }
+
+    //KAI new change
+    public static boolean isValidURL(String input) {
+        try {
+            new URL(input);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    //KAI new change
+    public static void showAlignedLists(List<List<String>> l1, List<List<String>> l2, List<List<String>> l3) {
+        StringBuilder text = new StringBuilder();
+
+        // Iterate over the rows
+        for (int i = 0; i < l1.size(); i++) {
+            // Get the current elements from each list
+            String element1 = String.join(" ", l1.get(i));
+            String element2 = String.join(" ", l2.get(i));
+            String element3 = String.join(" ", l3.get(i));
+
+            // Append elements with line breaks after each set
+            text.append(element1).append("\n");
+            text.append(element2).append("\n");
+            text.append(element3).append("\n\n");  // Double line break to separate sets
+        }
+
+        result.setText(text.toString());
+    }
+
+    //KAI new change
+    private void highlightWord(String word, Color color) {
+        String text = result.getText();
+        int index = text.indexOf(word);
+
+        while (index >= 0) {
+            try {
+                Highlighter highlighter = result.getHighlighter();
+                highlighter.addHighlight(index, index + word.length(), new DefaultHighlighter.DefaultHighlightPainter(color));
+                index = text.indexOf(word, index + word.length());
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
