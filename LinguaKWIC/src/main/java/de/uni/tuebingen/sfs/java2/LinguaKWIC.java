@@ -256,10 +256,10 @@ public class LinguaKWIC {
         File file = new File("aRandomText.txt");
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
         System.out.println(linguaKWIC.getSentences());
-        System.out.println(linguaKWIC.getTokens());
-        System.out.println(linguaKWIC.getPosTags());
-        System.out.println(linguaKWIC.getLemmas());
-        System.out.println(linguaKWIC.getLang());
+//        System.out.println(linguaKWIC.getTokens());
+//        System.out.println(linguaKWIC.getPosTags());
+//        System.out.println(linguaKWIC.getLemmas());
+//        System.out.println(linguaKWIC.getLang());
         List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne");
         System.out.println("Search results for 'Sonne': " + results);
 

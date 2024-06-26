@@ -1,4 +1,5 @@
 package de.uni.tuebingen.sfs.java2;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -51,10 +52,10 @@ public class LinguaKWICGUI extends JFrame {
         gbc.gridx = 3;
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
-        try{
+        try {
             Image img1 = ImageIO.read(getClass().getResource("resources/IMG_0190.PNG"));
             browseButton.setIcon(new ImageIcon(img1));
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e);
         }
 
@@ -166,6 +167,7 @@ public class LinguaKWICGUI extends JFrame {
         add(saveToXMLButton, gbc);
 
     }
+
     private class BackgroundPanel extends JPanel {
         private Image backgroundImage;
 
