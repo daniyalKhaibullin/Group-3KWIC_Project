@@ -11,6 +11,7 @@
 package de.uni.tuebingen.sfs.java2;
 
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -42,7 +43,7 @@ public class LinguaKWIC {
      * Returns the url
      */
     @Getter
-    private String url; //url to wikipedia
+    private URL url; //url to wikipedia
     /**
      * -- GETTER --
      * Returns the text of url
@@ -86,7 +87,8 @@ public class LinguaKWIC {
     @Getter
     private List<List<String>> lemmas = new ArrayList<>(); // lemmas
 
-    public TextSearch textSearch;
+    @Getter
+    private TextSearch textSearch;
 
 
     /**
@@ -95,8 +97,8 @@ public class LinguaKWIC {
      * @param url The text which should be annotated.
      */
     public LinguaKWIC(String url) throws IOException {
-        this.url = url;
-        WikipediaScraper scraper = new WikipediaScraper(this.url);
+        this.url = new URL(url);
+        WikipediaScraper scraper = new WikipediaScraper(this.url.toString());
         getTextUrl(scraper);
         process();
     }
@@ -258,13 +260,15 @@ public class LinguaKWIC {
         System.out.println(linguaKWIC.getPosTags());
         System.out.println(linguaKWIC.getLemmas());
         System.out.println(linguaKWIC.getLang());
+        List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne");
+        System.out.println("Search results for 'Sonne': " + results);
 
-        LinguaKWIC linguaKWIC2 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
-        System.out.println(linguaKWIC2.getSentences());
-        System.out.println(linguaKWIC2.getTokens());
-        System.out.println(linguaKWIC2.getPosTags());
-        System.out.println(linguaKWIC2.getLemmas());
-        System.out.println(linguaKWIC2.getLang());
+//        LinguaKWIC linguaKWIC2 = new LinguaKWIC("https://en.wikipedia.org/wiki/Computer");
+//        System.out.println(linguaKWIC2.getSentences());
+//        System.out.println(linguaKWIC2.getTokens());
+//        System.out.println(linguaKWIC2.getPosTags());
+//        System.out.println(linguaKWIC2.getLemmas());
+//        System.out.println(linguaKWIC2.getLang());
     }
 
 }
