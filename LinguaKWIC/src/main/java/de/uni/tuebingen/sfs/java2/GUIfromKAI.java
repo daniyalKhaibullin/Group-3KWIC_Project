@@ -42,7 +42,6 @@ public class GUIfromKAI extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         getContentPane().setBackground(new Color(230, 230, 250));
-        initializeComponents();
         Font customFont = new Font("Serif", Font.PLAIN, 14);
         JLabel fileLabel = new JLabel("File:");
         fileLabel.setFont(customFont);
@@ -264,16 +263,19 @@ public class GUIfromKAI extends JFrame {
             List<List<String>> Sentences = linguaKWIC.getTokens();
             List<List<String>> lemmas = linguaKWIC.getLemmas();
             List<List<String>> posTags = linguaKWIC.getPosTags();
-            showAlignedLists(Sentences, lemmas, posTags);
+//            showAlignedLists(Sentences, lemmas, posTags);
             
             if (wordLemmaCheckBox.isSelected()) {
-                highlightWord(searchWord.getText(), Color.red);
+                List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByLemm(searchWord.getText());
+                showAlignedLists(Sentences, lemmas, posTags, results);
             }
             if (wordPOSTagCheckBox.isSelected()) {
-                highlightWord(searchWord.getText(), Color.red);
+                List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByTag(searchWord.getText());
+                showAlignedLists(Sentences, lemmas, posTags, results);
             }
             if (exactWordCheckBox.isSelected()) {
-                searchWord.getText();
+                List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken(searchWord.getText());
+                showAlignedLists(Sentences, lemmas, posTags, results);
             }
 
 
@@ -286,10 +288,6 @@ public class GUIfromKAI extends JFrame {
         }
     }
 
-    private void initializeComponents() {
-
-
-    }
 
     //KAI new change
     public static boolean isValidURL(String input) {
@@ -302,12 +300,11 @@ public class GUIfromKAI extends JFrame {
     }
 
     //KAI new change
-    public static void showAlignedLists(List<List<String>> l1, List<List<String>> l2, List<List<String>> l3) {
+    public static void showAlignedLists(List<List<String>> l1, List<List<String>> l2, List<List<String>> l3, List<TextSearch.Pair> indices) {
         StringBuilder text = new StringBuilder();
 
-        // Iterate over the rows
         for (int i = 0; i < l1.size(); i++) {
-            // Get the current elements from each list
+
             String element1 = String.join(" ", l1.get(i));
             String element2 = String.join(" ", l2.get(i));
             String element3 = String.join(" ", l3.get(i));
@@ -315,14 +312,30 @@ public class GUIfromKAI extends JFrame {
             // Append elements with line breaks after each set
             text.append(element1).append("\n");
             text.append(element2).append("\n");
-            text.append(element3).append("\n\n");  // Double line break to separate sets
+            text.append(element3).append("\n\n");
         }
 
         result.setText(text.toString());
+
+        // Highlight the specific elements at indices i1 and i2
+        for (TextSearch.Pair indexPair : indices) {
+            int i2 = indexPair.getTokenIndex();
+            int i1 = indexPair.getSentenceIndex();
+
+            if (i1 < l1.size() && i2 < l1.get(i1).size()) {
+                String word1 = l1.get(i1).get(i2);
+                String word2 = l2.get(i1).get(i2);
+                String word3 = l3.get(i1).get(i2);
+                highlightWord(word1, Color.pink);
+                highlightWord(word2, Color.pink);
+                highlightWord(word3, Color.pink);
+            }
+        }
     }
 
+
     //KAI new change
-    private void highlightWord(String word, Color color) {
+    private static void highlightWord(String word, Color color) {
         String text = result.getText();
         int index = text.indexOf(word);
 
