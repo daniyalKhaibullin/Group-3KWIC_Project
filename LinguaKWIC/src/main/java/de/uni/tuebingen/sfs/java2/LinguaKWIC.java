@@ -264,16 +264,14 @@ public class LinguaKWIC implements Serializable {
     public static void main(String[] args) throws IOException {
         File file = new File("aRandomText.txt");
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
-<<<<<<< HEAD
-        System.out.println(linguaKWIC.getSentences());
-=======
+
 //        System.out.println(linguaKWIC.getSentences());
->>>>>>> b16b7cb76ccf0077590fc1d78dae4c235c42881f
 //        System.out.println(linguaKWIC.getTokens());
 //        System.out.println(linguaKWIC.getPosTags());
 //        System.out.println(linguaKWIC.getLemmas());
 //        System.out.println(linguaKWIC.getLang());
         List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne");
+        System.out.println(results.get(0).getSentenceIndex());
         System.out.println("Search results for 'Sonne': " + results);
 
         long startTime = System.currentTimeMillis();
