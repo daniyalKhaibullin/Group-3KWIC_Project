@@ -1,3 +1,5 @@
+//it failed to load any pics or font....AAAAAAAAAAAA
+//the good news here is that the layouts can really move freely now
 package de.uni.tuebingen.sfs.java2;
 
 import javax.imageio.ImageIO;
@@ -6,8 +8,8 @@ import java.awt.*;
 import java.io.IOException;
 
 public class LinguaKWICGUI extends JFrame {
-    private static final int WIDTH = 1200;
-    private static final int HEIGHT = 1000;
+    private static final int WIDTH = 800;
+    private static final int HEIGHT = 600;
     private Font customFont;
 
     public LinguaKWICGUI() {
@@ -15,60 +17,62 @@ public class LinguaKWICGUI extends JFrame {
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        de.uni.tuebingen.sfs.java2.LinguaKWICGUI.BackgroundPanel backgroundPanel = new de.uni.tuebingen.sfs.java2.LinguaKWICGUI.BackgroundPanel();
-        backgroundPanel.setLayout(new GridBagLayout());
         setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        Font customFont = new Font("Serif", Font.PLAIN, 14);
-
-        getContentPane().setBackground(new Color(230, 230, 250));
+        loadCustomFont();
+        getContentPane().setBackground(new Color(163, 163, 215));
 
         initializeComponents();
 
         setVisible(true);
     }
 
+    private void loadCustomFont() {
+        try {
+            // Adjust the path to your custom font file
+            customFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/resources/LanaPixel.ttf")).deriveFont(14f);
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(customFont);
+        } catch (IOException | FontFormatException e) {
+            e.printStackTrace();
+            customFont = new Font("Serif", Font.PLAIN, 14); // Fallback to Serif if custom font loading fails (like always
+        }
+    }
+
     private void initializeComponents() {
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(20, 20, 20, 20);
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel fileLabel = new JLabel("File:");
         fileLabel.setFont(customFont);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridwidth = 1;
         add(fileLabel, gbc);
 
-        JTextField fileField = new JTextField(30);
+        JTextField fileField = new JTextField(40);
         fileField.setFont(customFont);
         gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 3;
         add(fileField, gbc);
 
         JButton browseButton = new JButton("Browse");
         browseButton.setFont(customFont);
-        gbc.gridx = 3;
+        gbc.gridx = 4;
         gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
         try {
-            Image img1 = ImageIO.read(getClass().getResource("resources/IMG_0190.PNG"));
+            Image img1 = ImageIO.read(getClass().getResource("/resources/IMG_0190.PNG"));
             browseButton.setIcon(new ImageIcon(img1));
         } catch (Exception e) {
             System.out.println(e);
         }
-
-        /*browseButton.setIcon(new ImageIcon("resources/IMG_0190.PNG"));
         add(browseButton, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
-         */
 
         JCheckBox exactWordCheckBox = new JCheckBox("Exact word");
         exactWordCheckBox.setFont(customFont);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
         add(exactWordCheckBox, gbc);
 
         JCheckBox wordLemmaCheckBox = new JCheckBox("Word lemma");
@@ -83,19 +87,21 @@ public class LinguaKWICGUI extends JFrame {
 
         JButton searchButton = new JButton("Search");
         searchButton.setFont(customFont);
-        gbc.gridx = 3;
-        gbc.fill = GridBagConstraints.NONE;
-        // 设置按钮图标
-        searchButton.setIcon(new ImageIcon("/Users/hooray/Desktop/Lab/K-word/IMG_0192.PNG"));
+        gbc.gridx = 4;
+        try {
+            Image img2 = ImageIO.read(getClass().getResource("/resources/IMG_0192.PNG"));
+            searchButton.setIcon(new ImageIcon(img2));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         add(searchButton, gbc);
 
-        // 结果显示部分
         JTextArea searchResults = new JTextArea();
         searchResults.setFont(customFont);
         JScrollPane scrollPane = new JScrollPane(searchResults);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.gridwidth = 4;
+        gbc.gridwidth = 5;
         gbc.gridheight = 3;
         gbc.fill = GridBagConstraints.BOTH;
         add(scrollPane, gbc);
@@ -142,7 +148,7 @@ public class LinguaKWICGUI extends JFrame {
         JScrollPane recentScrollPane = new JScrollPane(recentSearches);
         gbc.gridx = 1;
         gbc.gridy = 5;
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 4;
         gbc.gridheight = 2;
         gbc.fill = GridBagConstraints.BOTH;
         add(recentScrollPane, gbc);
@@ -152,46 +158,29 @@ public class LinguaKWICGUI extends JFrame {
         JScrollPane statsScrollPane = new JScrollPane(textStatistics);
         gbc.gridx = 1;
         gbc.gridy = 7;
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 4;
         gbc.gridheight = 1;
         add(statsScrollPane, gbc);
 
         JButton saveToXMLButton = new JButton("Save to XML");
         saveToXMLButton.setFont(customFont);
-        gbc.gridx = 3;
+        gbc.gridx = 4;
         gbc.gridy = 8;
         gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
-
-        saveToXMLButton.setIcon(new ImageIcon("/Users/hooray/Desktop/Lab/K-word/IMG_0195.PNG"));
+        try {
+            Image img3 = ImageIO.read(getClass().getResource("/resources/IMG_0195.PNG"));
+            saveToXMLButton.setIcon(new ImageIcon(img3));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         add(saveToXMLButton, gbc);
-
     }
 
-    private class BackgroundPanel extends JPanel {
-        private Image backgroundImage;
-
-        public BackgroundPanel() {
-            try {
-                backgroundImage = ImageIO.read(getClass().getResource("/resources/IMG_0143.PNG"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (backgroundImage != null) {
-                g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-            }
-        }
-    }
-
-
-    // Main method to create and display the GUI
     public static void main(String[] args) {
-        de.uni.tuebingen.sfs.java2.LinguaKWICGUI gui = new de.uni.tuebingen.sfs.java2.LinguaKWICGUI();
-        gui.setVisible(true);
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new LinguaKWICGUI();
+            }
+        });
     }
 }
