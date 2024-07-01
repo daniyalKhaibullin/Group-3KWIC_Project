@@ -13,13 +13,13 @@ public class LinguaKWICGUI extends JFrame {
     private Font customFont;
 
     public LinguaKWICGUI() {
-        setTitle("Lingua KWIC ");
+        setTitle("Lingua KWIC");
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridBagLayout());
         loadCustomFont();
-        getContentPane().setBackground(new Color(163, 163, 215));
+        getContentPane().setBackground(new Color(153, 153, 189));
 
         initializeComponents();
 
@@ -28,13 +28,12 @@ public class LinguaKWICGUI extends JFrame {
 
     private void loadCustomFont() {
         try {
-            // Adjust the path to your custom font file
             customFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/resources/LanaPixel.ttf")).deriveFont(14f);
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             ge.registerFont(customFont);
         } catch (IOException | FontFormatException e) {
             e.printStackTrace();
-            customFont = new Font("Serif", Font.PLAIN, 14); // Fallback to Serif if custom font loading fails (like always
+            customFont = new Font("Serif", Font.PLAIN, 14); // Fallback to Serif if custom font loading fails (as always
         }
     }
 
@@ -174,6 +173,20 @@ public class LinguaKWICGUI extends JFrame {
             System.out.println(e);
         }
         add(saveToXMLButton, gbc);
+
+        // Add the image to the top right corner
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.NORTHEAST;
+        try {
+            Image img4 = ImageIO.read(getClass().getResource("/resources/IMG_0190.PNG"));
+            JLabel imgLabel = new JLabel(new ImageIcon(img4));
+            add(imgLabel, gbc);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     public static void main(String[] args) {
