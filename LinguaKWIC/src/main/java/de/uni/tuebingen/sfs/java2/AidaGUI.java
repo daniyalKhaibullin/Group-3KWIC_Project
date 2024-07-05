@@ -204,10 +204,38 @@ package de.uni.tuebingen.sfs.java2;//package de.uni.tuebingen.sfs.java2;
 //    }
 //}
 //
+
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 
 public class AidaGUI {
+    static JCheckBox exactWordCheckBox;
+    static JCheckBox wordLemmaCheckBox;
+    static JCheckBox wordPOSTagCheckBox;
+    static JCheckBox caseSensitiveCheckBox;
+    static JTextField exactWordField;
+    static JTextField wordLemmaField;
+    static JTextField wordPOSTagField;
+    static File file = null;
+    static JTextField targetField;
+    static JComboBox<String> urlFileComboBox;
+    static JRadioButton wholeSentenceRadioButton;
+    static JRadioButton neighborRadioButton;
+    static JTextArea searchResultsArea;
+    static List<TextSearch.Pair> NLPResults;
+    static JSpinner neighborXSpinner;
+    static JSpinner neighborYSpinner;
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(AidaGUI::createAndShowGUI);
@@ -235,11 +263,11 @@ public class AidaGUI {
 
         JLabel targetLabel = new JLabel("Target:");
         targetLabel.setFont(font);
-        JTextField targetField = new JTextField(30);
+        targetField = new JTextField(30);
         targetField.setFont(font);
 
         String[] urlFileOptions = {"URL", "File"};
-        JComboBox<String> urlFileComboBox = new JComboBox<>(urlFileOptions);
+        urlFileComboBox = new JComboBox<>(urlFileOptions);
         urlFileComboBox.setFont(font);
 
         targetPanel.add(targetLabel);
@@ -250,13 +278,19 @@ public class AidaGUI {
         JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         optionsPanel.setBackground(panelColor);
 
-        JCheckBox exactWordCheckBox = new JCheckBox("Exact word");
-        JCheckBox wordLemmaCheckBox = new JCheckBox("Word lemma");
-        JCheckBox wordPOSTagCheckBox = new JCheckBox("Word POS Tag");
+        exactWordCheckBox = new JCheckBox("Exact word");
+        wordLemmaCheckBox = new JCheckBox("Word lemma");
+        wordPOSTagCheckBox = new JCheckBox("Word POS Tag");
 
-        JTextField exactWordField = new JTextField(15);
-        JTextField wordLemmaField = new JTextField(15);
-        JTextField wordPOSTagField = new JTextField(15);
+        ButtonGroup gt = new ButtonGroup();
+        exactWordCheckBox.setSelected(true);
+        gt.add(exactWordCheckBox);
+        gt.add(wordLemmaCheckBox);
+        gt.add(wordPOSTagCheckBox);
+
+        exactWordField = new JTextField(15);
+        wordLemmaField = new JTextField(15);
+        wordPOSTagField = new JTextField(15);
 
         exactWordField.setFont(font);
         wordLemmaField.setFont(font);
@@ -281,15 +315,15 @@ public class AidaGUI {
         JPanel sentencePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         sentencePanel.setBackground(panelColor);
 
-        JRadioButton wholeSentenceRadioButton = new JRadioButton("Whole Sentence");
-        JRadioButton neighborRadioButton = new JRadioButton("Neighbor");
+        wholeSentenceRadioButton = new JRadioButton("Whole Sentence");
+        neighborRadioButton = new JRadioButton("Neighbor");
+        ButtonGroup wn = new ButtonGroup();
+        wholeSentenceRadioButton.setSelected(true);
+        wn.add(wholeSentenceRadioButton);
+        wn.add(neighborRadioButton);
 
-        ButtonGroup sentenceGroup = new ButtonGroup();
-        sentenceGroup.add(wholeSentenceRadioButton);
-        sentenceGroup.add(neighborRadioButton);
-
-        JSpinner neighborXSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
-        JSpinner neighborYSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
+        neighborXSpinner = new JSpinner(new SpinnerNumberModel(0, -5, 0, 1));
+        neighborYSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 5, 1));
 
         neighborXSpinner.setEnabled(false);
         neighborYSpinner.setEnabled(false);
@@ -300,7 +334,14 @@ public class AidaGUI {
             neighborYSpinner.setEnabled(selected);
         });
 
-        JCheckBox caseSensitiveCheckBox = new JCheckBox("Case Sensitive");
+        wholeSentenceRadioButton.addActionListener(e -> {
+            if (wholeSentenceRadioButton.isSelected()) {
+                neighborYSpinner.setEnabled(false);
+                neighborXSpinner.setEnabled(false);
+            }
+        });
+
+        caseSensitiveCheckBox = new JCheckBox("Case Sensitive");
 
         sentencePanel.add(wholeSentenceRadioButton);
         sentencePanel.add(neighborRadioButton);
@@ -321,7 +362,7 @@ public class AidaGUI {
         // Results Panel
         JPanel resultsPanel = new JPanel(new BorderLayout());
         resultsPanel.setBackground(backgroundColor);
-        JTextArea searchResultsArea = new JTextArea();
+        searchResultsArea = new JTextArea();
         searchResultsArea.setEditable(false);
         searchResultsArea.setFont(font);
         JScrollPane scrollPane = new JScrollPane(searchResultsArea);
@@ -343,12 +384,20 @@ public class AidaGUI {
         searchButton.setForeground(Color.WHITE);
         searchButton.setFont(font);
         searchButton.setMaximumSize(buttonSize);
+        searchButton.addActionListener(new searchButtonHandler());
 
         JButton advanceButton = new JButton("Advance");
         advanceButton.setBackground(buttonColor);
         advanceButton.setForeground(Color.WHITE);
         advanceButton.setFont(font);
         advanceButton.setMaximumSize(buttonSize);
+
+        JButton BrowseButton = new JButton("Browse");
+        BrowseButton.setBackground(buttonColor);
+        BrowseButton.setForeground(Color.WHITE);
+        BrowseButton.setFont(font);
+        BrowseButton.setMaximumSize(buttonSize);
+        BrowseButton.addActionListener(new browseButtonHandler());
 
         JTextArea recentSearchesArea = new JTextArea(5, 15);
         recentSearchesArea.setEditable(false);
@@ -361,6 +410,8 @@ public class AidaGUI {
         saveButton.setFont(font);
         saveButton.setMaximumSize(buttonSize);
 
+        rightPanel.add(BrowseButton);
+        rightPanel.add(Box.createVerticalStrut(150));
         rightPanel.add(searchButton);
         rightPanel.add(Box.createVerticalStrut(10));
         rightPanel.add(advanceButton);
@@ -407,6 +458,118 @@ public class AidaGUI {
         });
 
         frame.setVisible(true);
+    }
+
+    private static class searchButtonHandler implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            LinguaKWIC linguaKWIC = null;
+            String filePathOrLink = targetField.getText();
+            if (isValidURL(filePathOrLink)) {
+                try {
+                    linguaKWIC = new LinguaKWIC(filePathOrLink);
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
+            } else if (filePathOrLink != null && new File(filePathOrLink).exists()) {
+                try {
+                    linguaKWIC = new LinguaKWIC(new File(filePathOrLink));
+                } catch (Exception t) {
+                    t.printStackTrace();
+                }
+            }
+
+            if (linguaKWIC == null) {
+                JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            List<List<String>> tokens = linguaKWIC.getTokens();
+            List<List<String>> lemmas = linguaKWIC.getLemmas();
+            List<List<String>> posTags = linguaKWIC.getPosTags();
+
+            List<TextSearch.Pair> NLPResults = null;
+            String searchText = searchResultsArea.getText();
+
+            if (wordLemmaCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText);
+            } else if (wordPOSTagCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText);
+            } else if (exactWordCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText);
+            } else if (wordLemmaCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText.toLowerCase());
+            } else if (wordPOSTagCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText.toLowerCase());
+            } else if (exactWordCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText.toLowerCase());
+            }
+
+            // Display search results in the GUI
+            displaySearchResults(NLPResults, tokens, lemmas, posTags);
+        }
+
+
+
+        private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                          List<List<String>> lemmas, List<List<String>> posTags) {
+            searchResultsArea.setText("");
+            if (results == null || results.isEmpty()) {
+                searchResultsArea.append("No results found.");
+                return;
+            }
+
+            for (TextSearch.Pair result : results) {
+                int sentenceIndex = result.getSentenceIndex();
+                int tokenIndex = result.getTokenIndex();
+
+                if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
+                    String token = tokens.get(sentenceIndex).get(tokenIndex);
+                    String lemma = lemmas.get(sentenceIndex).get(tokenIndex);
+                    String posTag = posTags.get(sentenceIndex).get(tokenIndex);
+
+                    // Highlighting logic - Example: Wrap in HTML tags to highlight
+                    String highlightedToken = "<span style='background-color: yellow;'>" + token + "</span>";
+                    String highlightedLemma = "<span style='background-color: yellow;'>" + lemma + "</span>";
+                    String highlightedPosTag = "<span style='background-color: yellow;'>" + posTag + "</span>";
+
+                    // Append to the searchResultsArea with appropriate formatting
+                    searchResultsArea.append("Sentence " + sentenceIndex + ": ");
+
+                    // Append each token with its highlighting
+                    searchResultsArea.append(highlightedToken + " ");
+
+                    // Append new line for clarity
+                    searchResultsArea.append("\n");
+                }
+            }}
+    }
+
+    private static class browseButtonHandler implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Create a new JFileChooser
+            JFileChooser fileChooser = new JFileChooser();
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
+            fileChooser.setFileFilter(filter);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+            // Show the open dialog and get the user's response
+            int response = fileChooser.showOpenDialog(null);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                file = fileChooser.getSelectedFile();
+                targetField.setText(file.getName());
+                urlFileComboBox.setSelectedItem("File");
+                urlFileComboBox.setEnabled(false);
+            }
+        }
+    }
+
+    public static boolean isValidURL(String input) {
+        try {
+            new URL(input);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
     }
 }
 
