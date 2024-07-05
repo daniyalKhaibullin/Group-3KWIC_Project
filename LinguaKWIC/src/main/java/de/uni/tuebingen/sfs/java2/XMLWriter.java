@@ -1,7 +1,21 @@
+package de.uni.tuebingen.sfs.java2;
+
+import lombok.Getter;
+
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLEventWriter;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+
 /**
  * XMLWriter
  *
- * Version 1.0
+ * Version 1.2
  *
  * This class is responsible for writing session data to an XML file.
  * The session data includes uploaded text files, linguistic processing results (tokens, lemmas, POS tags),
@@ -18,135 +32,267 @@
  * - UploadedFile
  * - ProcessedFile
  * - WikipediaArticle
+ *
+ * Integration with Swing:
+ * To integrate this class with a Swing application, follow these steps:
+ * 1. Create GUI components such as buttons and text fields.
+ * 2. Add action listeners to the buttons to trigger the XML writing process.
+ * 3. Collect the data from the text fields and other input components.
+ * 4. Call XMLWriter.writeXML() with the collected data when the button is clicked.
+ *
+ * Example:
+ * JButton saveButton = new JButton("Save to XML");
+ * saveButton.addActionListener(e -> {
+ *     List<UploadedFile> uploadedFiles = ...; // Collect data from GUI
+ *     List<ProcessedFile> processedFiles = ...; // Collect data from GUI
+ *     List<WikipediaArticle> articles = ...; // Collect data from GUI
+ *     XMLWriter.writeXML("output.xml", uploadedFiles, processedFiles, articles);
+ * });
+ *
+ * Detailed Integration Steps:
+ * 1. **Button Creation**:
+ *    Create a JButton in your Swing GUI for saving XML.
+ *
+ * 2. **Add Action Listener**:
+ *    Attach an action listener to the button that gathers the necessary data from your GUI components.
+ *
+ * 3. **Collect Data**:
+ *    Ensure you have methods to collect data from your text fields, tables, or other components that hold the session data.
+ *
+ * 4. **Call writeXML**:
+ *    Within the action listener, call the `writeXML` method of `XMLWriter`, passing the collected data.
+ *
+ * 5. **File Dialog**:
+ *    Optionally, use a `JFileChooser` to let the user specify the location and name of the XML file to save.
+ *
+ * Example Integration:
+ * ```java
+ * saveButton.addActionListener(e -> {
+ *     // Assuming methods getUploadedFiles(), getProcessedFiles(), getWikipediaArticles() are defined to collect data
+ *     List<UploadedFile> uploadedFiles = getUploadedFiles();
+ *     List<ProcessedFile> processedFiles = getProcessedFiles();
+ *     List<WikipediaArticle> articles = getWikipediaArticles();
+ *
+ *     // Use JFileChooser to select file save location
+ *     JFileChooser fileChooser = new JFileChooser();
+ *     fileChooser.setDialogTitle("Save XML");
+ *     int userSelection = fileChooser.showSaveDialog(null);
+ *     if (userSelection == JFileChooser.APPROVE_OPTION) {
+ *         File fileToSave = fileChooser.getSelectedFile();
+ *         XMLWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
+ *         JOptionPane.showMessageDialog(null, "File saved successfully!");
+ *     }
+ * });
+ * ```
+ *
+ * This makes the XMLWriter class straightforward to integrate into any Swing-based application, providing a seamless way to save session data to an XML file.
  */
-
-
-
-package de.uni.tuebingen.sfs.java2;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import lombok.Setter;
-import lombok.Getter;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.util.List;
 
 public class XMLWriter {
 
     public static void writeXML(String fileName, List<UploadedFile> uploadedFiles, List<ProcessedFile> processedFiles, List<WikipediaArticle> articles) {
-        try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+        XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+        XMLEventFactory eventFactory = XMLEventFactory.newInstance();
 
-            // Create new document
-            Document doc = docBuilder.newDocument();
-            Element rootElement = doc.createElement("session");
-            doc.appendChild(rootElement);
+        try (OutputStream outputStream = new FileOutputStream(fileName)) {
+            XMLEventWriter eventWriter = xmlOutputFactory.createXMLEventWriter(outputStream, "UTF-8");
+            XMLEvent newLine = eventFactory.createCharacters("\n");
+            XMLEvent indent = eventFactory.createCharacters("    ");
+
+            eventWriter.add(eventFactory.createStartDocument("UTF-8", "1.0"));
+            eventWriter.add(newLine);
+
+            // Start root element
+            eventWriter.add(eventFactory.createStartElement("", "", "session"));
+            eventWriter.add(newLine);
 
             // Metadata
-            Element metadata = doc.createElement("metadata");
-            rootElement.appendChild(metadata);
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createStartElement("", "", "metadata"));
+            eventWriter.add(newLine);
 
-            Element date = doc.createElement("date");
-            date.appendChild(doc.createTextNode("2024-06-20"));
-            metadata.appendChild(date);
+            eventWriter.add(indent);
+            eventWriter.add(indent);
+            createElement(eventWriter, "date", "2024-06-20");
+            createElement(eventWriter, "time", "15:00");
 
-            Element time = doc.createElement("time");
-            time.appendChild(doc.createTextNode("15:00"));
-            metadata.appendChild(time);
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createEndElement("", "", "metadata"));
+            eventWriter.add(newLine);
 
             // Uploaded Files
-            Element uploadedFilesElement = doc.createElement("uploadedFiles");
-            rootElement.appendChild(uploadedFilesElement);
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createStartElement("", "", "uploadedFiles"));
+            eventWriter.add(newLine);
 
             for (UploadedFile file : uploadedFiles) {
-                Element fileElement = doc.createElement("file");
-                uploadedFilesElement.appendChild(fileElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "file"));
+                eventWriter.add(newLine);
 
-                Element fileNameElement = doc.createElement("fileName");
-                fileNameElement.appendChild(doc.createTextNode(file.getFileName()));
-                fileElement.appendChild(fileNameElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                createElement(eventWriter, "fileName", file.getFileName());
+                createElement(eventWriter, "content", file.getContent());
 
-                Element contentElement = doc.createElement("content");
-                contentElement.appendChild(doc.createTextNode(file.getContent()));
-                fileElement.appendChild(contentElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "file"));
+                eventWriter.add(newLine);
             }
+
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createEndElement("", "", "uploadedFiles"));
+            eventWriter.add(newLine);
 
             // Linguistic Processing
-            Element linguisticProcessingElement = doc.createElement("linguisticProcessing");
-            rootElement.appendChild(linguisticProcessingElement);
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createStartElement("", "", "linguisticProcessing"));
+            eventWriter.add(newLine);
 
             for (ProcessedFile processedFile : processedFiles) {
-                Element fileElement = doc.createElement("file");
-                linguisticProcessingElement.appendChild(fileElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "file"));
+                eventWriter.add(newLine);
 
-                Element fileNameElement = doc.createElement("fileName");
-                fileNameElement.appendChild(doc.createTextNode(processedFile.getFileName()));
-                fileElement.appendChild(fileNameElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                createElement(eventWriter, "fileName", processedFile.getFileName());
 
-                Element tokensElement = doc.createElement("tokens");
-                fileElement.appendChild(tokensElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "tokens"));
+                eventWriter.add(newLine);
+
                 for (String token : processedFile.getTokens()) {
-                    Element tokenElement = doc.createElement("token");
-                    tokenElement.appendChild(doc.createTextNode(token));
-                    tokensElement.appendChild(tokenElement);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    createElement(eventWriter, "token", token);
                 }
 
-                Element lemmasElement = doc.createElement("lemmas");
-                fileElement.appendChild(lemmasElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "tokens"));
+                eventWriter.add(newLine);
+
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "lemmas"));
+                eventWriter.add(newLine);
+
                 for (String lemma : processedFile.getLemmas()) {
-                    Element lemmaElement = doc.createElement("lemma");
-                    lemmaElement.appendChild(doc.createTextNode(lemma));
-                    lemmasElement.appendChild(lemmaElement);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    createElement(eventWriter, "lemma", lemma);
                 }
 
-                Element posTagsElement = doc.createElement("posTags");
-                fileElement.appendChild(posTagsElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "lemmas"));
+                eventWriter.add(newLine);
+
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "posTags"));
+                eventWriter.add(newLine);
+
                 for (String pos : processedFile.getPosTags()) {
-                    Element posElement = doc.createElement("pos");
-                    posElement.appendChild(doc.createTextNode(pos));
-                    posTagsElement.appendChild(posElement);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    eventWriter.add(indent);
+                    createElement(eventWriter, "pos", pos);
                 }
+
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "posTags"));
+                eventWriter.add(newLine);
+
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "file"));
+                eventWriter.add(newLine);
             }
+
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createEndElement("", "", "linguisticProcessing"));
+            eventWriter.add(newLine);
 
             // Web Scraping
-            Element webScrapingElement = doc.createElement("webScraping");
-            rootElement.appendChild(webScrapingElement);
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createStartElement("", "", "webScraping"));
+            eventWriter.add(newLine);
 
             for (WikipediaArticle article : articles) {
-                Element articleElement = doc.createElement("article");
-                webScrapingElement.appendChild(articleElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createStartElement("", "", "article"));
+                eventWriter.add(newLine);
 
-                Element urlElement = doc.createElement("url");
-                urlElement.appendChild(doc.createTextNode(article.getUrl()));
-                articleElement.appendChild(urlElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                createElement(eventWriter, "url", article.getUrl());
+                createElement(eventWriter, "content", article.getContent());
 
-                Element contentElement = doc.createElement("content");
-                contentElement.appendChild(doc.createTextNode(article.getContent()));
-                articleElement.appendChild(contentElement);
+                eventWriter.add(indent);
+                eventWriter.add(indent);
+                eventWriter.add(eventFactory.createEndElement("", "", "article"));
+                eventWriter.add(newLine);
             }
 
-            // Write the content into an XML file
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(new File(fileName));
+            eventWriter.add(indent);
+            eventWriter.add(eventFactory.createEndElement("", "", "webScraping"));
+            eventWriter.add(newLine);
 
-            transformer.transform(source, result);
+            // End root element
+            eventWriter.add(eventFactory.createEndElement("", "", "session"));
+            eventWriter.add(newLine);
+
+            eventWriter.add(eventFactory.createEndDocument());
+            eventWriter.close();
 
             System.out.println("File saved!");
 
-        } catch (ParserConfigurationException | TransformerException pce) {
-            pce.printStackTrace();
+        } catch (XMLStreamException | IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    private static void createElement(XMLEventWriter eventWriter, String name, String value) throws XMLStreamException {
+        XMLEventFactory eventFactory = XMLEventFactory.newInstance();
+        XMLEvent newLine = eventFactory.createCharacters("\n");
+        XMLEvent indent = eventFactory.createCharacters("    ");
+
+        eventWriter.add(indent);
+        eventWriter.add(eventFactory.createStartElement("", "", name));
+        eventWriter.add(eventFactory.createCharacters(value));
+        eventWriter.add(eventFactory.createEndElement("", "", name));
+        eventWriter.add(newLine);
     }
 }
 
@@ -201,4 +347,3 @@ class WikipediaArticle {
         this.content = content;
     }
 }
-
