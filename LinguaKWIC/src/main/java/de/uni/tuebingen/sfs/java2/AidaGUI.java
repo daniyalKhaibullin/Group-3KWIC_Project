@@ -216,7 +216,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AidaGUI {
     static JCheckBox exactWordCheckBox;
@@ -226,7 +228,7 @@ public class AidaGUI {
     static JTextField exactWordField;
     static JTextField wordLemmaField;
     static JTextField wordPOSTagField;
-    static File file = null;
+    static File file;
     static JTextField targetField;
     static JComboBox<String> urlFileComboBox;
     static JRadioButton wholeSentenceRadioButton;
@@ -235,6 +237,7 @@ public class AidaGUI {
     static List<TextSearch.Pair> NLPResults;
     static JSpinner neighborXSpinner;
     static JSpinner neighborYSpinner;
+    static LinguaKWIC linguaKWIC = null;
 
 
     public static void main(String[] args) {
@@ -409,6 +412,7 @@ public class AidaGUI {
         saveButton.setForeground(Color.WHITE);
         saveButton.setFont(font);
         saveButton.setMaximumSize(buttonSize);
+        saveButton.addActionListener(new saveButtonHandler());
 
         rightPanel.add(BrowseButton);
         rightPanel.add(Box.createVerticalStrut(150));
@@ -460,25 +464,65 @@ public class AidaGUI {
         frame.setVisible(true);
     }
 
+
+    private static class saveButtonHandler implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+            List<UploadedFile> uploadedFiles = new ArrayList<>();
+            List<ProcessedFile> processedFiles = new ArrayList<>();
+            List<WikipediaArticle> articles = new ArrayList<>();
+
+            if (file.exists()) {
+                uploadedFiles.add(new UploadedFile(file.getName(), linguaKWIC.getText()));
+                processedFiles.add(new ProcessedFile(file.getName(), linguaKWIC.getTokens().stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList())));
+            }
+            if (isValidURL(targetField.getText())) {
+                articles.add(new WikipediaArticle(targetField.getText(), linguaKWIC.getText()));
+            }
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Specify a file to save");
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
+            fileChooser.setFileFilter(filter);
+            fileChooser.setAcceptAllFileFilterUsed(false);
+
+            int userSelection = fileChooser.showSaveDialog(null);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                XMLWriter xmlWriter = new XMLWriter();
+                xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
+            }
+        }
+    }
+
     private static class searchButtonHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            LinguaKWIC linguaKWIC = null;
+
             String filePathOrLink = targetField.getText();
             if (isValidURL(filePathOrLink)) {
                 try {
                     linguaKWIC = new LinguaKWIC(filePathOrLink);
                 } catch (IOException ioe) {
                     ioe.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error loading from URL", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
-            } else if (filePathOrLink != null && new File(filePathOrLink).exists()) {
+            } else if (filePathOrLink != null) {
                 try {
-                    linguaKWIC = new LinguaKWIC(new File(filePathOrLink));
+                    linguaKWIC = new LinguaKWIC(file);
                 } catch (Exception t) {
                     t.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Error loading from file", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
-            }
-
-            if (linguaKWIC == null) {
+            } else {
                 JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -491,23 +535,22 @@ public class AidaGUI {
             String searchText = searchResultsArea.getText();
 
             if (wordLemmaCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText);
+                NLPResults = linguaKWIC.textSearch.searchByLemm(searchText);
             } else if (wordPOSTagCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText);
+                NLPResults = linguaKWIC.textSearch.searchByTag(searchText);
             } else if (exactWordCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText);
+                NLPResults = linguaKWIC.textSearch.searchByToken(searchText);
             } else if (wordLemmaCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText.toLowerCase());
+                NLPResults = linguaKWIC.textSearch.searchByLemm(searchText.toLowerCase());
             } else if (wordPOSTagCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText.toLowerCase());
+                NLPResults = linguaKWIC.textSearch.searchByTag(searchText.toLowerCase());
             } else if (exactWordCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText.toLowerCase());
+                NLPResults = linguaKWIC.textSearch.searchByToken(searchText.toLowerCase());
             }
 
             // Display search results in the GUI
             displaySearchResults(NLPResults, tokens, lemmas, posTags);
         }
-
 
 
         private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
@@ -541,7 +584,8 @@ public class AidaGUI {
                     // Append new line for clarity
                     searchResultsArea.append("\n");
                 }
-            }}
+            }
+        }
     }
 
     private static class browseButtonHandler implements ActionListener {
