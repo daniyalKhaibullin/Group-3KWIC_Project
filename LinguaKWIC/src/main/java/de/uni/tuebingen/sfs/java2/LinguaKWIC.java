@@ -48,7 +48,7 @@ public class LinguaKWIC implements Serializable {
     private List<List<String>> tokens = new ArrayList<>();
     private List<List<String>> posTags = new ArrayList<>();
     private List<List<String>> lemmas = new ArrayList<>();
-    public TextSearch textSearch;
+    private TextSearch textSearch;
 
     /**
      * Constructs a LinguaKWIC object from a URL, extracting and processing text content.
