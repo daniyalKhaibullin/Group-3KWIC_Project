@@ -2,6 +2,9 @@ package de.uni.tuebingen.sfs.java2;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +15,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AidaGUI {
@@ -33,6 +38,7 @@ public class AidaGUI {
     static JSpinner neighborXSpinner;
     static JSpinner neighborYSpinner;
     static LinguaKWIC linguaKWIC = null;
+    static JTextArea recentSearchesArea;
     final static  Dimension buttonSize = new Dimension(150, 30);
 
 
@@ -198,7 +204,7 @@ public class AidaGUI {
         advanceButton.setMaximumSize(buttonSize);
 
 
-        JTextArea recentSearchesArea = new JTextArea(5, 15);
+        recentSearchesArea = new JTextArea(5, 15);
         recentSearchesArea.setEditable(false);
         recentSearchesArea.setFont(font);
         JScrollPane recentScrollPane = new JScrollPane(recentSearchesArea);
@@ -348,6 +354,8 @@ public class AidaGUI {
                 return;
             }
 
+            recentSearchesArea.append(filePathOrLink);
+
             List<List<String>> tokens = linguaKWIC.getTokens();
             List<List<String>> lemmas = linguaKWIC.getLemmas();
             List<List<String>> posTags = linguaKWIC.getPosTags();
@@ -388,31 +396,73 @@ public class AidaGUI {
                 return;
             }
 
+            Highlighter highlighter = searchResultsArea.getHighlighter();
+            Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+
             for (TextSearch.Pair result : results) {
                 int sentenceIndex = result.getSentenceIndex();
                 int tokenIndex = result.getTokenIndex();
-
                 if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
                     String token = tokens.get(sentenceIndex).get(tokenIndex);
                     String lemma = lemmas.get(sentenceIndex).get(tokenIndex);
                     String posTag = posTags.get(sentenceIndex).get(tokenIndex);
 
-                    // Highlighting logic - Example: Wrap in HTML tags to highlight
-                    String highlightedToken = "<span style='background-color: yellow;'>" + token + "</span>";
-                    String highlightedLemma = "<span style='background-color: yellow;'>" + lemma + "</span>";
-                    String highlightedPosTag = "<span style='background-color: yellow;'>" + posTag + "</span>";
+                    StringBuilder sentenceText = new StringBuilder("Sentence " + (sentenceIndex + 1) + ": ");
+                    StringBuilder lemmaText = new StringBuilder("Lemmas: ");
+                    StringBuilder posTagText = new StringBuilder("POS Tags: ");
 
-                    // Append to the searchResultsArea with appropriate formatting
-                    searchResultsArea.append("Sentence " + sentenceIndex + ": ");
+                    for (String t : tokens.get(sentenceIndex)) {
+                        sentenceText.append(t).append(" ");
+                    }
+                    sentenceText.append("\n");
 
-                    // Append each token with its highlighting
-                    searchResultsArea.append(highlightedToken + " ");
+                    for (String l : lemmas.get(sentenceIndex)) {
+                        lemmaText.append(l).append(" ");
+                    }
+                    lemmaText.append("\n");
 
-                    // Append new line for clarity
-                    searchResultsArea.append("\n");
+                    for (String p : posTags.get(sentenceIndex)) {
+                        posTagText.append(p).append(" ");
+                    }
+                    posTagText.append("\n\n");
+
+                    // Append the texts
+                    int sentenceStartPos = searchResultsArea.getText().length();
+                    searchResultsArea.append(sentenceText.toString());
+                    int sentenceEndPos = sentenceStartPos + sentenceText.length();
+
+                    int lemmaStartPos = searchResultsArea.getText().length();
+                    searchResultsArea.append(lemmaText.toString());
+                    int lemmaEndPos = lemmaStartPos + lemmaText.length();
+
+                    int posTagStartPos = searchResultsArea.getText().length();
+                    searchResultsArea.append(posTagText.toString());
+                    int posTagEndPos = posTagStartPos + posTagText.length();
+
+                    try {
+                        // Highlight the word in the sentence
+                        int wordStart = sentenceStartPos + sentenceText.indexOf(token);
+                        int wordEnd = wordStart + token.length();
+                        highlighter.addHighlight(wordStart, wordEnd, painter);
+
+                        // Highlight the corresponding lemma
+                        int lemmaStart = lemmaStartPos + lemmaText.indexOf(lemma);
+                        int lemmaEnd = lemmaStart + lemma.length();
+                        highlighter.addHighlight(lemmaStart, lemmaEnd, painter);
+
+                        // Highlight the corresponding POS tag
+                        int posTagStart = posTagStartPos + posTagText.indexOf(posTag);
+                        int posTagEnd = posTagStart + posTag.length();
+                        highlighter.addHighlight(posTagStart, posTagEnd, painter);
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
+
+
+
     }
 
     private static class browseButtonHandler implements ActionListener {
