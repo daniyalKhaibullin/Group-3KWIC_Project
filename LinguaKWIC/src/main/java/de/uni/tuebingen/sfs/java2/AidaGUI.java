@@ -33,6 +33,7 @@ public class AidaGUI {
     static JSpinner neighborXSpinner;
     static JSpinner neighborYSpinner;
     static LinguaKWIC linguaKWIC = null;
+    final static  Dimension buttonSize = new Dimension(150, 30);
 
 
     public static void main(String[] args) {
@@ -42,8 +43,10 @@ public class AidaGUI {
     private static void createAndShowGUI() {
         JFrame frame = new JFrame("AidaGUI");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 800);
+        frame.setSize(1500, 1000);
         frame.setLayout(new BorderLayout());
+        // Center the frame on the screen
+        frame.setLocationRelativeTo(null);
 
         // Style settings
         Font font = new Font("Arial", Font.PLAIN, 14);
@@ -64,13 +67,17 @@ public class AidaGUI {
         targetField = new JTextField(30);
         targetField.setFont(font);
 
-        String[] urlFileOptions = {"URL", "File"};
-        urlFileComboBox = new JComboBox<>(urlFileOptions);
-        urlFileComboBox.setFont(font);
+        JButton BrowseButton = new JButton("Browse File");
+        BrowseButton.setBackground(buttonColor);
+        BrowseButton.setForeground(Color.WHITE);
+        BrowseButton.setFont(font);
+        BrowseButton.setMaximumSize(buttonSize);
+        BrowseButton.addActionListener(new browseButtonHandler());
 
         targetPanel.add(targetLabel);
         targetPanel.add(targetField);
-        targetPanel.add(urlFileComboBox);
+        targetPanel.add(BrowseButton);
+
 
         // Second line for checkboxes and fields
         JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -175,7 +182,7 @@ public class AidaGUI {
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        Dimension buttonSize = new Dimension(120, 30);
+
 
         JButton searchButton = new JButton("Search");
         searchButton.setBackground(buttonColor);
@@ -184,18 +191,12 @@ public class AidaGUI {
         searchButton.setMaximumSize(buttonSize);
         searchButton.addActionListener(new searchButtonHandler());
 
-        JButton advanceButton = new JButton("Advance");
+        JButton advanceButton = new JButton("Advance Search");
         advanceButton.setBackground(buttonColor);
         advanceButton.setForeground(Color.WHITE);
         advanceButton.setFont(font);
         advanceButton.setMaximumSize(buttonSize);
 
-        JButton BrowseButton = new JButton("Browse");
-        BrowseButton.setBackground(buttonColor);
-        BrowseButton.setForeground(Color.WHITE);
-        BrowseButton.setFont(font);
-        BrowseButton.setMaximumSize(buttonSize);
-        BrowseButton.addActionListener(new browseButtonHandler());
 
         JTextArea recentSearchesArea = new JTextArea(5, 15);
         recentSearchesArea.setEditable(false);
@@ -209,7 +210,7 @@ public class AidaGUI {
         saveButton.setMaximumSize(buttonSize);
         saveButton.addActionListener(new saveButtonHandler());
 
-        rightPanel.add(BrowseButton);
+
         rightPanel.add(Box.createVerticalStrut(150));
         rightPanel.add(searchButton);
         rightPanel.add(Box.createVerticalStrut(10));
@@ -225,34 +226,59 @@ public class AidaGUI {
         // Action for Advanced Button
         advanceButton.addActionListener(e -> {
             JDialog advancedDialog = new JDialog(frame, "Advanced Search", true);
-            advancedDialog.setSize(400, 300);
+            advancedDialog.setSize(500, 300);
             advancedDialog.setLayout(new BorderLayout());
             advancedDialog.setBackground(panelColor);
 
-            JLabel infoLabel = new JLabel("<html>In Advanced search, you will provide us a topic in the language that you want and we will search in Wikipedia for your topic :)</html>");
-            infoLabel.setFont(font);
-            advancedDialog.add(infoLabel, BorderLayout.NORTH);
+            // Center the dialog on the screen
+            advancedDialog.setLocationRelativeTo(frame);
 
-            JPanel advancedPanel = new JPanel(new GridLayout(2, 2));
-            advancedPanel.setBackground(panelColor);
+            JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.setBackground(panelColor);
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-            advancedPanel.add(new JLabel("Topic:"));
+            JLabel infoLabel = new JLabel("<html><p style='text-align:center;'>In Advanced search, you will provide us a topic in the language that you want and we will search in Wikipedia for your topic :)</p></html>");
+            infoLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            contentPanel.add(infoLabel);
+            contentPanel.add(Box.createVerticalStrut(20));
+
+            JPanel formPanel = new JPanel();
+            formPanel.setLayout(new GridLayout(2, 2, 10, 10));
+            formPanel.setBackground(panelColor);
+
+            JLabel topicLabel = new JLabel("Topic:");
+            topicLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            formPanel.add(topicLabel);
+
             JTextField topicField = new JTextField();
-            advancedPanel.add(topicField);
-            advancedPanel.add(new JLabel("Language:"));
+            topicField.setFont(font);
+            topicField.setBackground(Color.WHITE);
+            formPanel.add(topicField);
+
+            JLabel languageLabel = new JLabel("Language:");
+            languageLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            formPanel.add(languageLabel);
 
             String[] languages = {"English", "German"};
             JComboBox<String> languageComboBox = new JComboBox<>(languages);
-            advancedPanel.add(languageComboBox);
+            languageComboBox.setFont(font);
+            languageComboBox.setBackground(Color.WHITE);
+            formPanel.add(languageComboBox);
 
-            advancedDialog.add(advancedPanel, BorderLayout.CENTER);
+            contentPanel.add(formPanel);
+            contentPanel.add(Box.createVerticalStrut(20));
+
             JButton okButton = new JButton("OK");
             okButton.setBackground(buttonColor);
             okButton.setForeground(Color.WHITE);
             okButton.setFont(font);
+            okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> advancedDialog.dispose());
-            advancedDialog.add(okButton, BorderLayout.SOUTH);
+            contentPanel.add(okButton);
 
+            advancedDialog.add(contentPanel, BorderLayout.CENTER);
             advancedDialog.setVisible(true);
         });
 
