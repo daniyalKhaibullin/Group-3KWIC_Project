@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AidaGUI {
@@ -388,28 +390,43 @@ public class AidaGUI {
                 return;
             }
 
+            Set<Integer> highlightedSentences = new HashSet<>();
             for (TextSearch.Pair result : results) {
                 int sentenceIndex = result.getSentenceIndex();
                 int tokenIndex = result.getTokenIndex();
+                highlightedSentences.add(sentenceIndex);
 
                 if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
                     String token = tokens.get(sentenceIndex).get(tokenIndex);
-                    String lemma = lemmas.get(sentenceIndex).get(tokenIndex);
-                    String posTag = posTags.get(sentenceIndex).get(tokenIndex);
-
-                    // Highlighting logic - Example: Wrap in HTML tags to highlight
                     String highlightedToken = "<span style='background-color: yellow;'>" + token + "</span>";
-                    String highlightedLemma = "<span style='background-color: yellow;'>" + lemma + "</span>";
-                    String highlightedPosTag = "<span style='background-color: yellow;'>" + posTag + "</span>";
 
-                    // Append to the searchResultsArea with appropriate formatting
-                    searchResultsArea.append("Sentence " + sentenceIndex + ": ");
+                    tokens.get(sentenceIndex).set(tokenIndex, highlightedToken);  // Replace the token with highlighted version
+                }
+            }
 
-                    // Append each token with its highlighting
-                    searchResultsArea.append(highlightedToken + " ");
+            for (int sentenceIndex : highlightedSentences) {
+                if (sentenceIndex < tokens.size()) {
+                    List<String> sentenceTokens = tokens.get(sentenceIndex);
+                    List<String> sentenceLemmas = lemmas.get(sentenceIndex);
+                    List<String> sentencePosTags = posTags.get(sentenceIndex);
 
-                    // Append new line for clarity
+                    searchResultsArea.append("Sentence " + (sentenceIndex + 1) + ": ");
+                    for (String token : sentenceTokens) {
+                        searchResultsArea.append(token + " ");
+                    }
                     searchResultsArea.append("\n");
+
+                    searchResultsArea.append("Lemmas: ");
+                    for (String lemma : sentenceLemmas) {
+                        searchResultsArea.append(lemma + " ");
+                    }
+                    searchResultsArea.append("\n");
+
+                    searchResultsArea.append("POS Tags: ");
+                    for (String posTag : sentencePosTags) {
+                        searchResultsArea.append(posTag + " ");
+                    }
+                    searchResultsArea.append("\n\n");
                 }
             }
         }
