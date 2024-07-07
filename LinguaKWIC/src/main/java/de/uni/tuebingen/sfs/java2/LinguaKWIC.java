@@ -48,7 +48,7 @@ public class LinguaKWIC implements Serializable {
     private List<List<String>> tokens = new ArrayList<>();
     private List<List<String>> posTags = new ArrayList<>();
     private List<List<String>> lemmas = new ArrayList<>();
-    private TextSearch textSearch;
+    public TextSearch textSearch;
 
     /**
      * Constructs a LinguaKWIC object from a URL, extracting and processing text content.
@@ -258,6 +258,12 @@ public class LinguaKWIC implements Serializable {
 
         loadModelsAndProcessText();
         createTextSearchObject();
+
+        if (textSearch == null) {
+            System.err.println("TextSearch object creation failed.");
+        } else {
+            System.out.println("TextSearch object created successfully.");
+        }
     }
 
     // Testing the class functionalities (feel free to remove this in production)
