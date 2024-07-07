@@ -31,7 +31,7 @@ public class LinguaKWICGUI extends JFrame {
     JTextArea searchWord;
     static JTextArea result;
     File file = null;
-    java.util.List<TextSearch.Pair> results;
+    List<TextSearch.Pair> results;
 
     public LinguaKWICGUI() {
         setTitle("Lingua KWIC");
