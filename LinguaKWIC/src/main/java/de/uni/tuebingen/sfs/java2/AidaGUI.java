@@ -353,19 +353,25 @@ public class AidaGUI {
             List<List<String>> posTags = linguaKWIC.getPosTags();
 
             List<TextSearch.Pair> NLPResults = null;
-            String searchText = searchResultsArea.getText();
+
 
             if (wordLemmaCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                String searchText = wordLemmaField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText);
             } else if (wordPOSTagCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                String searchText = wordPOSTagField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText);
             } else if (exactWordCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
+                String searchText = exactWordField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText);
             } else if (wordLemmaCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                String searchText = wordLemmaField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText.toLowerCase());
             } else if (wordPOSTagCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                String searchText = wordPOSTagField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText.toLowerCase());
             } else if (exactWordCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
+                String searchText = exactWordField.getText();
                 NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText.toLowerCase());
             }
 
@@ -422,8 +428,8 @@ public class AidaGUI {
             if (response == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
                 targetField.setText(file.getName());
-                urlFileComboBox.setSelectedItem("File");
-                urlFileComboBox.setEnabled(false);
+//                urlFileComboBox.setSelectedItem("File");
+//                urlFileComboBox.setEnabled(false);
             }
         }
     }
