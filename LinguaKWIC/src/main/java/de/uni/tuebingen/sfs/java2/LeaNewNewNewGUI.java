@@ -22,8 +22,8 @@ public class LeaNewNewNewGUI {
     private JRadioButton neighborRadioButton;
     private JRadioButton caseSensitiveRadioButton;
     private JSlider neighborSlider;
-    JScrollPane bottomScrollPane = new JScrollPane(bottomTextArea);
-    JScrollPane leftScrollPane = new JScrollPane(leftTextArea);
+    private JScrollPane bottomScrollPane;
+    private JScrollPane leftScrollPane;
 
 
     public LeaNewNewNewGUI() {
@@ -44,6 +44,8 @@ public class LeaNewNewNewGUI {
         neighborRadioButton = new JRadioButton("NEIGHBOR");
         caseSensitiveRadioButton = new JRadioButton("CASE SENSITIVE");
         neighborSlider = new JSlider();
+        bottomScrollPane = new JScrollPane(bottomTextArea);
+        leftScrollPane = new JScrollPane(leftTextArea);
 
         // Set fonts and colors
         Font font = new Font("Phosphate", Font.PLAIN, 15);
@@ -130,8 +132,6 @@ public class LeaNewNewNewGUI {
         rootPanel.setLayout(null);  // Absolute positioning
         rootPanel.setBackground(new Color(153, 153, 189));
 
-        JScrollPane bottomScrollPane = new JScrollPane(bottomTextArea);
-        JScrollPane leftScrollPane = new JScrollPane(leftTextArea);
         bottomScrollPane.getVerticalScrollBar().setBackground(new Color(153, 153, 189));
         bottomScrollPane.getVerticalScrollBar().setForeground(new Color(165, 109, 152));
         bottomScrollPane.getHorizontalScrollBar().setBackground(new Color(153, 153, 189));
@@ -150,15 +150,12 @@ public class LeaNewNewNewGUI {
         wordPOSTagRadioButton.setBounds(30, 130, 200, 30);
         wordPOSTagField.setBounds(190, 130, 80, 30);
 
-        bottomTextArea.setBounds(30, 170, 235, 400);
-        leftTextArea.setBounds(300, 50, 800, 680);
+        bottomScrollPane.setBounds(30, 170, 235, 400);
+        leftScrollPane.setBounds(300, 50, 800, 680);
         wholeSentenceRadioButton.setBounds(30, 580, 200, 30);
         neighborRadioButton.setBounds(30, 620, 200, 30);
         neighborSlider.setBounds(30, 660, 200, 30);
         caseSensitiveRadioButton.setBounds(30, 700, 200, 30);
-
-        bottomScrollPane.setBounds(30, 170, 235, 400);
-        leftScrollPane.setBounds(300, 50, 800, 680);
 
         rootPanel.add(searchField);
         rootPanel.add(comboBox1);
@@ -170,8 +167,6 @@ public class LeaNewNewNewGUI {
         rootPanel.add(wordLemmaField);
         rootPanel.add(wordPOSTagRadioButton);
         rootPanel.add(wordPOSTagField);
-        rootPanel.add(bottomTextArea);
-        rootPanel.add(leftTextArea);
         rootPanel.add(wholeSentenceRadioButton);
         rootPanel.add(neighborRadioButton);
         rootPanel.add(neighborSlider);
