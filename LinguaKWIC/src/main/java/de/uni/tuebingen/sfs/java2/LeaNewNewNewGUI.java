@@ -49,6 +49,9 @@ public class LeaNewNewNewGUI {
         Color fontColor = new Color(72, 78, 87);
         Color whiteColor = Color.WHITE;
 
+        Font inputfont = new Font("Papyrus", Font.BOLD, 15);
+        Color fontColor2 = new Color(72, 78, 87);
+
         serchButton.setFont(font);
         serchButton.setForeground(fontColor);
         serchButton.setBackground(new Color(153, 153, 189));
@@ -82,23 +85,23 @@ public class LeaNewNewNewGUI {
         wordPOSTagRadioButton.setForeground(whiteColor);
         wordPOSTagRadioButton.setBackground(new Color(84, 133, 32));
 
-        exactWordField.setFont(font);
+        exactWordField.setFont(inputfont);
         exactWordField.setForeground(whiteColor);
         exactWordField.setBackground(new Color(72, 78, 87));
 
-        wordLemmaField.setFont(font);
+        wordLemmaField.setFont(inputfont);
         wordLemmaField.setForeground(whiteColor);
         wordLemmaField.setBackground(new Color(72, 78, 87));
 
-        wordPOSTagField.setFont(font);
+        wordPOSTagField.setFont(inputfont);
         wordPOSTagField.setForeground(whiteColor);
         wordPOSTagField.setBackground(new Color(72, 78, 87));
 
-        bottomTextArea.setFont(font);
+        bottomTextArea.setFont(inputfont);
         bottomTextArea.setForeground(whiteColor);
         bottomTextArea.setBackground(new Color(89,123,94));
 
-        leftTextArea.setFont(font);
+        leftTextArea.setFont(inputfont);
         leftTextArea.setForeground(whiteColor);
         leftTextArea.setBackground(new Color(83,74,87));
         Border border = BorderFactory.createLineBorder(Color.WHITE); // Add a white border
@@ -124,24 +127,24 @@ public class LeaNewNewNewGUI {
         rootPanel.setBackground(new Color(153, 153, 189));
 
         // Set bounds and add components
-        serchField.setBounds(10, 10, 200, 30);
-        comboBox1.setBounds(220, 10, 100, 30);
-        serchButton.setBounds(330, 10, 100, 30);
-        saveButton.setBounds(900, 750, 200, 30);
-        exactWordRadioButton.setBounds(10, 50, 200, 30);
-        exactWordField.setBounds(200, 50, 50, 30);
-        wordLemmaRadioButton.setBounds(10, 90, 200, 30);
-        wordLemmaField.setBounds(200, 90, 50, 30);
-        wordPOSTagRadioButton.setBounds(10, 130, 200, 30);
-        wordPOSTagField.setBounds(200, 130, 50, 30);
+        serchField.setBounds(20, 10, 200, 30);
+        comboBox1.setBounds(230, 10, 100, 30);
+        serchButton.setBounds(340, 10, 100, 30);
+        saveButton.setBounds(900, 770, 200, 30);
+        exactWordRadioButton.setBounds(30, 50, 200, 30);
+        exactWordField.setBounds(190, 50, 80, 30);
+        wordLemmaRadioButton.setBounds(30, 90, 200, 30);
+        wordLemmaField.setBounds(190, 90, 80, 30);
+        wordPOSTagRadioButton.setBounds(30, 130, 200, 30);
+        wordPOSTagField.setBounds(190, 130, 80, 30);
         youGonnaSeeTextArea.setBounds(260, 50, 920, 500);
 
-        bottomTextArea.setBounds(10, 170, 235, 400);
+        bottomTextArea.setBounds(30, 170, 235, 400);
         leftTextArea.setBounds(300, 50, 800, 680);
-        wholeSentenceRadioButton.setBounds(10, 580, 200, 30);
-        neighborRadioButton.setBounds(10, 620, 200, 30);
-        neighborSlider.setBounds(10, 660, 200, 30);
-        caseSensitiveRadioButton.setBounds(10, 700, 200, 30);
+        wholeSentenceRadioButton.setBounds(30, 580, 200, 30);
+        neighborRadioButton.setBounds(30, 620, 200, 30);
+        neighborSlider.setBounds(30, 660, 200, 30);
+        caseSensitiveRadioButton.setBounds(30, 700, 200, 30);
 
         rootPanel.add(serchField);
         rootPanel.add(comboBox1);
@@ -163,7 +166,7 @@ public class LeaNewNewNewGUI {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Search whatever you want");
+        JFrame frame = new JFrame("Search whatever you want:)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(new LeaNewNewNewGUI().rootPanel);
         frame.setSize(1200, 1000);
