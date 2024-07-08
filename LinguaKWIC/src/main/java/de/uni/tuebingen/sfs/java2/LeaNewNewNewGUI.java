@@ -53,16 +53,19 @@ public class LeaNewNewNewGUI {
         Font inputfont = new Font("Papyrus", Font.BOLD, 15);
         Color fontColor2 = new Color(72, 78, 87);
 
+        Font whitefont = new Font("Phosphate", Font.PLAIN, 15);
+        Color whitefontColor = new Color(255, 255, 255);
+
         searchButton.setFont(font);
         searchButton.setForeground(fontColor);
         searchButton.setBackground(new Color(153, 153, 189));
 
         saveButton.setFont(font);
-        saveButton.setForeground(new Color(165, 109, 152));
+        saveButton.setForeground(new Color(207, 105, 184));
         saveButton.setBackground(new Color(165, 109, 152));
 
-        searchField.setFont(font);
-        searchField.setForeground(fontColor);
+        searchField.setFont(whitefont);
+        searchField.setForeground(whitefontColor);
         searchField.setBackground(new Color(170, 178, 141));
 
         comboBox1.setFont(font);
@@ -83,19 +86,21 @@ public class LeaNewNewNewGUI {
 
         exactWordField.setFont(inputfont);
         exactWordField.setForeground(whiteColor);
-        exactWordField.setBackground(new Color(192,174,182));
+        exactWordField.setBackground(new Color(191, 155, 166));
 
         wordLemmaField.setFont(inputfont);
         wordLemmaField.setForeground(whiteColor);
-        wordLemmaField.setBackground(new Color(192,174,182));
+        wordLemmaField.setBackground(new Color(186, 159, 178));
 
         wordPOSTagField.setFont(inputfont);
         wordPOSTagField.setForeground(whiteColor);
         wordPOSTagField.setBackground(new Color(192,174,182));
 
         bottomTextArea.setFont(inputfont);
-        bottomTextArea.setForeground(new Color(153, 153, 189));
+        bottomTextArea.setForeground(new Color(255, 255, 255));
         bottomTextArea.setBackground(new Color(89,123,94));
+        Border border2 = BorderFactory.createLineBorder(new Color(60, 76, 63)); // Add a white border
+        bottomTextArea.setBorder(border2);
 
         leftTextArea.setFont(inputfont);
         leftTextArea.setForeground(whiteColor);
@@ -131,7 +136,7 @@ public class LeaNewNewNewGUI {
 
 
         // Set bounds and add components
-        searchField.setBounds(20, 10, 200, 30);
+        searchField.setBounds(20, 10, 200, 25);
         comboBox1.setBounds(230, 10, 100, 30);
         searchButton.setBounds(340, 10, 100, 30);
         saveButton.setBounds(900, 770, 200, 30);
@@ -209,46 +214,12 @@ public class LeaNewNewNewGUI {
         }
     }
 
-    /*
-    public class RoundedJTextArea extends JTextArea {
-        private int arcWidth;
-        private int arcHeight;
-
-        public RoundedJTextArea(int arcWidth, int arcHeight) {
-            super();
-            this.arcWidth = arcWidth;
-            this.arcHeight = arcHeight;
-            setOpaque(false);
-            setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));  // Adjust padding if needed
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), arcWidth, arcHeight));
-            super.paintComponent(g2);
-            g2.dispose();
-        }
-
-        @Override
-        protected void paintBorder(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getForeground());
-            g2.draw(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight));
-            g2.dispose();
-        }
-    }*/
-
-
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Search whatever you want:)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setContentPane(new LeaNewNewNewGUI().rootPanel);
-        frame.setSize(1200, 1000);
+        frame.setSize(1150, 950);
         frame.setVisible(true);
     }
 }
