@@ -56,6 +56,9 @@ public class LeaNewNewNewGUI {
         Font whitefont = new Font("Phosphate", Font.PLAIN, 15);
         Color whitefontColor = new Color(255, 255, 255);
 
+        Font leftfont = new Font("Papyrus", Font.BOLD, 20);
+        Color leftfontColor = new Color(72, 78, 87);
+
         searchButton.setFont(font);
         searchButton.setForeground(fontColor);
         searchButton.setBackground(new Color(153, 153, 189));
@@ -102,7 +105,7 @@ public class LeaNewNewNewGUI {
         Border border2 = BorderFactory.createLineBorder(new Color(60, 76, 63)); // Add a white border
         bottomTextArea.setBorder(border2);
 
-        leftTextArea.setFont(inputfont);
+        leftTextArea.setFont(leftfont);
         leftTextArea.setForeground(whiteColor);
         leftTextArea.setBackground(new Color(83,74,87));
         Border border = BorderFactory.createLineBorder(Color.WHITE); // Add a white border
