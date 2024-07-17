@@ -473,33 +473,44 @@ public class LinguaKWICGUI extends JFrame {
                 return;
             }
 
-            recentTextArea.append(filePathOrLink);
-            recentTextArea.append("\n");
+
 
             List<List<String>> tokens = linguaKWIC.getTokens();
             List<List<String>> lemmas = linguaKWIC.getLemmas();
             List<List<String>> posTags = linguaKWIC.getPosTags();
 
             List<TextSearch.Pair> NLPResults = null;
-
+            resultTextArea.setText("");
 
             if (wordLemmaCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
                 String searchText = wordLemmaField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText);
             } else if (wordPOSTagCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
                 String searchText = wordPOSTagField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText);
             } else if (exactWordCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
                 String searchText = exactWordField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText);
             } else if (wordLemmaCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
                 String searchText = wordLemmaField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText.toLowerCase());
             } else if (wordPOSTagCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
                 String searchText = wordPOSTagField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText.toLowerCase());
             } else if (exactWordCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
                 String searchText = exactWordField.getText();
+                recentTextArea.append(searchText);
+                recentTextArea.append("\n");
                 NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText.toLowerCase());
             }
 
@@ -510,7 +521,6 @@ public class LinguaKWICGUI extends JFrame {
 
         private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
                                           List<List<String>> lemmas, List<List<String>> posTags) {
-            recentTextArea.setText("");
             if (results == null || results.isEmpty()) {
                 resultTextArea.append("No results found.");
                 return;
