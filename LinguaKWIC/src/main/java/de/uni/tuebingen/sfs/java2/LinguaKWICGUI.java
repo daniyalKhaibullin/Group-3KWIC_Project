@@ -55,6 +55,7 @@ public class LinguaKWICGUI extends JFrame {
     static File selectedFile;
     static LinguaKWIC linguaKWIC;
 
+
     public LinguaKWICGUI() {
         initializeComponents();
         setStyles();
@@ -120,6 +121,11 @@ public class LinguaKWICGUI extends JFrame {
         exactWordField.setEnabled(false);
         wordLemmaField.setEnabled(false);
         wordPOSTagField.setEnabled(false);
+        recentTextArea.setEditable(false);
+
+        resultTextArea.setEditable(false);
+        resultTextArea.setLineWrap(true);
+
     }
 
     private void setStyles() {
@@ -339,6 +345,7 @@ public class LinguaKWICGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // Create a new JFileChooser
+
             JFileChooser fileChooser = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
             fileChooser.setFileFilter(filter);
@@ -349,6 +356,7 @@ public class LinguaKWICGUI extends JFrame {
                 selectedFile = fileChooser.getSelectedFile();
                 searchField.setText(selectedFile.getName());
             }
+
         }
     }
 
@@ -403,7 +411,19 @@ public class LinguaKWICGUI extends JFrame {
             JButton okButton = new JButton("OK");
             okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-            okButton.addActionListener(event -> advancedDialog.dispose());
+            okButton.addActionListener(event -> {
+
+                String searchTopic = topicField.getText();
+                String lang = languageComboBox.getSelectedItem().toString();
+                if (lang.equals("English")) {
+                    lang = "en";
+                } else {
+                    lang = "de";
+                }
+                String url = "https://" + lang + ".wikipedia.org/wiki/" + searchTopic.replace(" ", "_");
+                searchField.setText(url);
+                advancedDialog.dispose();
+            });
             contentPanel.add(okButton);
 
             advancedDialog.add(contentPanel, BorderLayout.CENTER);
@@ -445,6 +465,7 @@ public class LinguaKWICGUI extends JFrame {
                 XMLWriter xmlWriter = new XMLWriter();
                 xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
             }
+
         }
     }
 
@@ -472,7 +493,6 @@ public class LinguaKWICGUI extends JFrame {
                 JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
 
 
             List<List<String>> tokens = linguaKWIC.getTokens();
@@ -592,7 +612,6 @@ public class LinguaKWICGUI extends JFrame {
         }
 
 
-
     }
 
     public static boolean isValidURL(String input) {
@@ -603,6 +622,7 @@ public class LinguaKWICGUI extends JFrame {
             return false;
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(LinguaKWICGUI::new);
