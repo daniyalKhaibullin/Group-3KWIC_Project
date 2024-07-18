@@ -10,12 +10,16 @@ import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 public class LinguaKWICGUI extends JFrame {
@@ -29,6 +33,8 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color BUTTON_BACKGROUND = new Color(234, 221, 231);
     private static final Font FONT = new Font("Phosphate", Font.PLAIN, 15);
     private static final Font INPUT_FONT = new Font("Papyrus", Font.BOLD, 15);
+
+    private static final int MAX_RECENT_ENTRIES = 25;
 
     // Components
     static RoundedTextField searchField;
@@ -48,12 +54,18 @@ public class LinguaKWICGUI extends JFrame {
     static JCheckBox caseSensitiveCheckBox;
     static JButton searchButton;
 
-    static JTextArea recentTextArea;
+
     static JButton saveButton;
     static JTextArea resultTextArea;
 
     static File selectedFile;
     static LinguaKWIC linguaKWIC;
+
+    //
+    static DefaultListModel<String> recentListModel;
+    static JList<String> recentList;
+
+    private static Queue<History> recentHistory = new ArrayDeque<>();
 
 
     public LinguaKWICGUI() {
@@ -92,9 +104,6 @@ public class LinguaKWICGUI extends JFrame {
         searchButton = new JButton("SEARCH");
         searchButton.addActionListener(new SearchButtonHandler());
 
-        recentTextArea = new JTextArea();
-        JScrollPane recentScrollPane = new JScrollPane(recentTextArea);
-
         // South components
         saveButton = new JButton("SAVE TO XML");
         saveButton.addActionListener(new SaveButtonHandler());
@@ -121,11 +130,31 @@ public class LinguaKWICGUI extends JFrame {
         exactWordField.setEnabled(false);
         wordLemmaField.setEnabled(false);
         wordPOSTagField.setEnabled(false);
-        recentTextArea.setEditable(false);
 
         resultTextArea.setEditable(false);
 
+        //
+        recentListModel = new DefaultListModel<>();
+        recentList = new JList<>(recentListModel);
+        recentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        recentList.setLayoutOrientation(JList.VERTICAL);
+        recentList.setVisibleRowCount(-1);
+        recentList.setVisibleRowCount(15); // Adjust based on your preferred visible rows
+        // Add JList to a JScrollPane if needed
+        JScrollPane scrollPane = new JScrollPane(recentList);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+
+        recentList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 1) {
+                    handleRecentListClick(evt);
+                }
+            }
+        });
+
     }
+
 
     private void setStyles() {
         // Set fonts and colors
@@ -158,10 +187,6 @@ public class LinguaKWICGUI extends JFrame {
 
         searchButton.setBackground(BUTTON_BACKGROUND);
 
-        recentTextArea.setFont(INPUT_FONT);
-        recentTextArea.setBackground(TEXT_AREA_BG_SECOND);
-        recentTextArea.setBorder(BorderFactory.createLineBorder(Color.WHITE));
-
         // South
         saveButton.setBackground(BUTTON_BACKGROUND);
 
@@ -169,12 +194,21 @@ public class LinguaKWICGUI extends JFrame {
         resultTextArea.setFont(INPUT_FONT);
         resultTextArea.setBackground(TEXT_AREA_BACKGROUND);
         resultTextArea.setBorder(BorderFactory.createLineBorder(Color.WHITE));
+        //
+        recentList.setFont(INPUT_FONT);
+        recentList.setBackground(TEXT_AREA_BG_SECOND);
+        recentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        recentList.setLayoutOrientation(JList.VERTICAL);
+        recentList.setVisibleRowCount(15);
+        recentList.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        recentList.setOpaque(true);
+
     }
 
     private void createLayout() {
         setTitle("LinguaKWIC");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1500, 1000);
+        setSize(1300, 1000);
         setLocationRelativeTo(null);
 
         // Main panel using BorderLayout
@@ -201,9 +235,10 @@ public class LinguaKWICGUI extends JFrame {
         recentPanel.setBackground(PRIMARY_COLOR);
         recentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        recentPanel.add(new JLabel("Recent:"), BorderLayout.NORTH);
-        JScrollPane recentScrollPane = new JScrollPane(recentTextArea);
-        recentScrollPane.setPreferredSize(new Dimension(200, 200)); // Increase size
+
+        recentPanel.add(new JLabel("History of Search (click for see more details):"), BorderLayout.NORTH);
+        JScrollPane recentScrollPane = new JScrollPane(recentList);
+        recentScrollPane.setPreferredSize(new Dimension(200, 200));
         recentPanel.add(recentScrollPane, BorderLayout.CENTER);
 
 
@@ -306,38 +341,6 @@ public class LinguaKWICGUI extends JFrame {
 
 
         setVisible(true);
-    }
-
-    @Setter
-    private static class RoundedTextField extends JTextField {
-        private final int arcWidth = 15;
-        private final int arcHeight = 15;
-
-        public RoundedTextField(int columns) {
-            super(columns);
-            setOpaque(false); // Make the text field non-opaque to paint background
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            if (!isOpaque() && getBackground() != null) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), arcWidth, arcHeight);
-                g2.dispose();
-            }
-            super.paintComponent(g);
-        }
-
-        @Override
-        protected void paintBorder(Graphics g) {
-            if (!isOpaque() && getBackground() != null) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(getForeground());
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight);
-                g2.dispose();
-            }
-        }
     }
 
     private class BrowseButtonHandler implements ActionListener {
@@ -515,25 +518,39 @@ public class LinguaKWICGUI extends JFrame {
                 // Perform the search based on selected checkboxes
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
-                    recentTextArea.insert(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                    History detail = new History(token + " " + lemma + " " + posTag,searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
+                    addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
-                    recentTextArea.insert(token + " " + lemma + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
+                    History detail = new History(token + " " + lemma, searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
-                    recentTextArea.insert(token + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(token + " " + posTag + "(in " + searchField.getText() + ")");
+                    History detail = new History(token + " " + posTag,searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
-                    recentTextArea.insert(lemma + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(lemma + " " + posTag + "(in " + searchField.getText() + ")");
+                    History detail = new History(lemma + " " + posTag, searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 } else if (exactWordCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
-                    recentTextArea.insert(token + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(token + "(in " + searchField.getText() + ")");
+                    History detail = new History(token , searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
-                    recentTextArea.insert(lemma + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(lemma + "(in " + searchField.getText() + ")");
+                    History detail = new History(lemma, searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
-                    recentTextArea.insert(posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                    addRecentEntry(posTag + "(in " + searchField.getText() + ")");
+                    History detail = new History(posTag,searchField.getText(),NLPResults.size(),0);
+                    addHistory(detail);
                 }
 
 
@@ -631,6 +648,53 @@ public class LinguaKWICGUI extends JFrame {
 
     }
 
+    private void handleRecentListClick(MouseEvent evt) {
+        int index = recentList.locationToIndex(evt.getPoint());
+
+        if (index >= 0) {
+            History selectedHistory = getHistoryByIndex(recentListModel.size()-(index+1));
+
+            // Create a new JDialog
+            JDialog advancedDialog = new JDialog(this, "Search History", true);
+            advancedDialog.setSize(500, 500);
+            advancedDialog.setLayout(new BorderLayout());
+            advancedDialog.setBackground(PRIMARY_COLOR);
+
+            // Center the dialog on the screen
+            advancedDialog.setLocationRelativeTo(this);
+
+            JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.setBackground(PRIMARY_COLOR);
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            JLabel infoLabel = new JLabel(selectedHistory.toString());
+            infoLabel.setBackground(PRIMARY_COLOR);
+            infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            contentPanel.add(infoLabel);
+            contentPanel.add(Box.createVerticalStrut(20));
+
+            JButton okButton = new JButton("OK");
+            okButton.setBackground(BUTTON_BACKGROUND);
+            okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            okButton.addActionListener(event -> {
+                advancedDialog.dispose();
+            });
+            contentPanel.add(okButton);
+            advancedDialog.add(contentPanel, BorderLayout.CENTER);
+            advancedDialog.setVisible(true);
+        }
+    }
+
+    private static void addRecentEntry(String entry) {
+        recentListModel.add(0, entry);
+
+        // Remove the oldest entry if the list exceeds the maximum capacity
+        if (recentListModel.size() > MAX_RECENT_ENTRIES) {
+            recentListModel.removeElementAt(MAX_RECENT_ENTRIES);
+        }
+    }
+
     public static boolean isValidURL(String input) {
         try {
             new URL(input);
@@ -638,6 +702,18 @@ public class LinguaKWICGUI extends JFrame {
         } catch (MalformedURLException e) {
             return false;
         }
+    }
+
+    public static void addHistory(History history) {
+        if (recentHistory.size() >= MAX_RECENT_ENTRIES) {
+            recentHistory.poll();
+        }
+        recentHistory.offer(history);
+    }
+
+    private History getHistoryByIndex(int index) {
+        List<History> historyList = new ArrayList<>(recentHistory);
+        return historyList.get(index);
     }
 
 
