@@ -81,8 +81,8 @@ public class LinguaKWICGUI extends JFrame {
 
         wholeSentenceRadioButton = new JRadioButton("WHOLE SENTENCE");
         neighborRadioButton = new JRadioButton("NEIGHBOR");
-        neighborRightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 15, 1));
-        neighborLeftSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 15, 1));
+        neighborRightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 20, 1));
+        neighborLeftSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 20, 1));
         ButtonGroup radioGroup = new ButtonGroup();
         radioGroup.add(wholeSentenceRadioButton);
         radioGroup.add(neighborRadioButton);
@@ -124,7 +124,6 @@ public class LinguaKWICGUI extends JFrame {
         recentTextArea.setEditable(false);
 
         resultTextArea.setEditable(false);
-        resultTextArea.setLineWrap(true);
 
     }
 
@@ -412,16 +411,19 @@ public class LinguaKWICGUI extends JFrame {
             okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> {
-
-                String searchTopic = topicField.getText();
-                String lang = languageComboBox.getSelectedItem().toString();
-                if (lang.equals("English")) {
-                    lang = "en";
-                } else {
-                    lang = "de";
+                try {
+                    String searchTopic = topicField.getText();
+                    String lang = languageComboBox.getSelectedItem().toString();
+                    if (lang.equals("English")) {
+                        lang = "en";
+                    } else {
+                        lang = "de";
+                    }
+                    String url = "https://" + lang + ".wikipedia.org/wiki/" + searchTopic.replace(" ", "_");
+                    searchField.setText(url);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Error performing advanced search: couldn't find the topic", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-                String url = "https://" + lang + ".wikipedia.org/wiki/" + searchTopic.replace(" ", "_");
-                searchField.setText(url);
                 advancedDialog.dispose();
             });
             contentPanel.add(okButton);
@@ -434,108 +436,113 @@ public class LinguaKWICGUI extends JFrame {
     private static class SaveButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            try {
+                java.util.List<UploadedFile> uploadedFiles = new ArrayList<>();
+                java.util.List<ProcessedFile> processedFiles = new ArrayList<>();
+                java.util.List<WikipediaArticle> articles = new ArrayList<>();
 
-            java.util.List<UploadedFile> uploadedFiles = new ArrayList<>();
-            java.util.List<ProcessedFile> processedFiles = new ArrayList<>();
-            java.util.List<WikipediaArticle> articles = new ArrayList<>();
+                if (selectedFile.exists()) {
+                    uploadedFiles.add(new UploadedFile(selectedFile.getName(), linguaKWIC.getText()));
+                    processedFiles.add(new ProcessedFile(selectedFile.getName(), linguaKWIC.getTokens().stream()
+                            .flatMap(java.util.List::stream)
+                            .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
+                            .flatMap(java.util.List::stream)
+                            .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList())));
+                }
+                if (isValidURL(searchField.getText())) {
+                    articles.add(new WikipediaArticle(searchField.getText(), linguaKWIC.getText()));
+                }
 
-            if (selectedFile.exists()) {
-                uploadedFiles.add(new UploadedFile(selectedFile.getName(), linguaKWIC.getText()));
-                processedFiles.add(new ProcessedFile(selectedFile.getName(), linguaKWIC.getTokens().stream()
-                        .flatMap(java.util.List::stream)
-                        .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
-                        .flatMap(java.util.List::stream)
-                        .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList())));
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Specify a file to save");
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
+                fileChooser.setFileFilter(filter);
+                fileChooser.setAcceptAllFileFilterUsed(false);
+
+                int userSelection = fileChooser.showSaveDialog(null);
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = fileChooser.getSelectedFile();
+                    XMLWriter xmlWriter = new XMLWriter();
+                    xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error saving file: Something went wrong ", "Error", JOptionPane.ERROR_MESSAGE);
             }
-            if (isValidURL(searchField.getText())) {
-                articles.add(new WikipediaArticle(searchField.getText(), linguaKWIC.getText()));
-            }
-
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Specify a file to save");
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
-            fileChooser.setFileFilter(filter);
-            fileChooser.setAcceptAllFileFilterUsed(false);
-
-            int userSelection = fileChooser.showSaveDialog(null);
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                File fileToSave = fileChooser.getSelectedFile();
-                XMLWriter xmlWriter = new XMLWriter();
-                xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
-            }
-
         }
     }
 
     private static class SearchButtonHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-
-            String filePathOrLink = searchField.getText();
-            if (isValidURL(filePathOrLink)) {
-                try {
-                    linguaKWIC = new LinguaKWIC(filePathOrLink);
-                } catch (IOException ioe) {
-                    ioe.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Error loading from URL", "Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                String filePathOrLink = searchField.getText();
+                if (isValidURL(filePathOrLink)) {
+                    try {
+                        linguaKWIC = new LinguaKWIC(filePathOrLink);
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error loading from URL", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } else if (filePathOrLink != null) {
+                    try {
+                        linguaKWIC = new LinguaKWIC(selectedFile);
+                    } catch (Exception t) {
+                        t.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error loading from file", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-            } else if (filePathOrLink != null) {
-                try {
-                    linguaKWIC = new LinguaKWIC(selectedFile);
-                } catch (Exception t) {
-                    t.printStackTrace();
-                    JOptionPane.showMessageDialog(null, "Error loading from file", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
+
+
+                List<List<String>> tokens = linguaKWIC.getTokens();
+                List<List<String>> lemmas = linguaKWIC.getLemmas();
+                List<List<String>> posTags = linguaKWIC.getPosTags();
+
+                List<TextSearch.Pair> NLPResults = null;
+                resultTextArea.setText("");
+                // Determine the search criteria
+                String token = exactWordField.getText();
+                String lemma = wordLemmaField.getText();
+                String posTag = wordPOSTagField.getText();
+                boolean caseSensitive = caseSensitiveCheckBox.isSelected();
+
+                // Perform the search based on selected checkboxes
+                if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
+                    recentTextArea.insert(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
+                    recentTextArea.insert(token + " " + lemma + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
+                    recentTextArea.insert(token + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
+                    recentTextArea.insert(lemma + " " + posTag + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (exactWordCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
+                    recentTextArea.insert(token + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (wordLemmaCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
+                    recentTextArea.insert(lemma + "(in " + searchField.getText() + ")" + "\n", 0);
+                } else if (wordPOSTagCheckBox.isSelected()) {
+                    NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
+                    recentTextArea.insert(posTag + "(in " + searchField.getText() + ")" + "\n", 0);
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Invalid file or URL", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+
+
+                // Display search results in the GUI
+                displaySearchResults(NLPResults, tokens, lemmas, posTags);
+            } catch (Exception ex) {
+//                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error loading data: this URL is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-
-
-            List<List<String>> tokens = linguaKWIC.getTokens();
-            List<List<String>> lemmas = linguaKWIC.getLemmas();
-            List<List<String>> posTags = linguaKWIC.getPosTags();
-
-            List<TextSearch.Pair> NLPResults = null;
-            resultTextArea.setText("");
-
-            if (wordLemmaCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                String searchText = wordLemmaField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText);
-            } else if (wordPOSTagCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                String searchText = wordPOSTagField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText);
-            } else if (exactWordCheckBox.isSelected() && caseSensitiveCheckBox.isSelected()) {
-                String searchText = exactWordField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText);
-            } else if (wordLemmaCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                String searchText = wordLemmaField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByLemm(searchText.toLowerCase());
-            } else if (wordPOSTagCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                String searchText = wordPOSTagField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByTag(searchText.toLowerCase());
-            } else if (exactWordCheckBox.isSelected() && !caseSensitiveCheckBox.isSelected()) {
-                String searchText = exactWordField.getText();
-                recentTextArea.append(searchText);
-                recentTextArea.append("\n");
-                NLPResults = linguaKWIC.getTextSearch().searchByToken(searchText.toLowerCase());
-            }
-
-            // Display search results in the GUI
-            displaySearchResults(NLPResults, tokens, lemmas, posTags);
         }
 
 
@@ -546,12 +553,29 @@ public class LinguaKWICGUI extends JFrame {
                 return;
             }
 
+
             Highlighter highlighter = resultTextArea.getHighlighter();
             Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+
+            resultTextArea.append(results.size() + " match(es) found:\n");
+
 
             for (TextSearch.Pair result : results) {
                 int sentenceIndex = result.getSentenceIndex();
                 int tokenIndex = result.getTokenIndex();
+                int start = 0;
+                int end = tokens.get(sentenceIndex).size();
+                int leftN;
+                int rightN;
+
+                if (neighborRadioButton.isSelected()) {
+                    leftN = (int) neighborLeftSpinner.getValue();
+                    rightN = (int) neighborRightSpinner.getValue();
+                    start = Math.max(0, tokenIndex - rightN);
+                    end = Math.min(tokens.get(sentenceIndex).size(), tokenIndex + leftN + 1);
+                }
+
+
                 if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
                     String token = tokens.get(sentenceIndex).get(tokenIndex);
                     String lemma = lemmas.get(sentenceIndex).get(tokenIndex);
@@ -561,34 +585,27 @@ public class LinguaKWICGUI extends JFrame {
                     StringBuilder lemmaText = new StringBuilder("Lemmas: ");
                     StringBuilder posTagText = new StringBuilder("POS Tags: ");
 
-                    for (String t : tokens.get(sentenceIndex)) {
-                        sentenceText.append(t).append(" ");
+
+                    for (int i = start; i < end; i++) {
+                        sentenceText.append(tokens.get(sentenceIndex).get(i)).append(" ");
+                        lemmaText.append(lemmas.get(sentenceIndex).get(i)).append(" ");
+                        posTagText.append(posTags.get(sentenceIndex).get(i)).append(" ");
                     }
                     sentenceText.append("\n");
-
-                    for (String l : lemmas.get(sentenceIndex)) {
-                        lemmaText.append(l).append(" ");
-                    }
                     lemmaText.append("\n");
-
-                    for (String p : posTags.get(sentenceIndex)) {
-                        posTagText.append(p).append(" ");
-                    }
                     posTagText.append("\n\n");
 
                     // Append the texts
                     int sentenceStartPos = resultTextArea.getText().length();
                     resultTextArea.append(sentenceText.toString());
-                    int sentenceEndPos = sentenceStartPos + sentenceText.length();
 
                     int lemmaStartPos = resultTextArea.getText().length();
                     resultTextArea.append(lemmaText.toString());
-                    int lemmaEndPos = lemmaStartPos + lemmaText.length();
 
                     int posTagStartPos = resultTextArea.getText().length();
                     resultTextArea.append(posTagText.toString());
-                    int posTagEndPos = posTagStartPos + posTagText.length();
 
+                    resultTextArea.setCaretPosition(0);
                     try {
                         // Highlight the word in the sentence
                         int wordStart = sentenceStartPos + sentenceText.indexOf(token);
@@ -605,12 +622,12 @@ public class LinguaKWICGUI extends JFrame {
                         int posTagEnd = posTagStart + posTag.length();
                         highlighter.addHighlight(posTagStart, posTagEnd, painter);
                     } catch (BadLocationException e) {
-                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Sorry, there was an issue displaying the search results \n due to a problem with the text position.", "Error", JOptionPane.ERROR_MESSAGE);
+
                     }
                 }
             }
         }
-
 
     }
 
