@@ -34,7 +34,7 @@ public class TextSearchTest {
 
     @Test
     void testSearchByTokenAndLemm() {
-        List<TextSearch.Pair> result = textSearch.searchByTokenAndLemm("the", "the");
+        List<TextSearch.Pair> result = textSearch.searchByTokenAndLemm("the", "the",false);
         List<TextSearch.Pair> expected = Arrays.asList(
                 new TextSearch.Pair(0, 0),
                 new TextSearch.Pair(1, 2)
@@ -44,7 +44,7 @@ public class TextSearchTest {
 
     @Test
     void testSearchByTokenAndTag() {
-        List<TextSearch.Pair> result = textSearch.searchByTokenAndTag("the", "DT");
+        List<TextSearch.Pair> result = textSearch.searchByTokenAndTag("the", "DT",false);
         List<TextSearch.Pair> expected = Arrays.asList(
                 new TextSearch.Pair(0, 0),
                 new TextSearch.Pair(1, 2)
@@ -54,7 +54,7 @@ public class TextSearchTest {
 
     @Test
     void testSearchByTagAndLemm() {
-        List<TextSearch.Pair> result = textSearch.searchByTagAndLemm("JJ", "lazy");
+        List<TextSearch.Pair> result = textSearch.searchByTagAndLemm("JJ", "lazy",false);
         List<TextSearch.Pair> expected = Arrays.asList(
                 new TextSearch.Pair(1, 3)
         );
@@ -63,7 +63,7 @@ public class TextSearchTest {
 
     @Test
     void testSearchByTokenAndLemmAndTag() {
-        List<TextSearch.Pair> result = textSearch.searchByTokenAndLemmAndTag("the", "the", "DT");
+        List<TextSearch.Pair> result = textSearch.searchByTokenAndLemmAndTag("the", "the", "DT" , false);
         List<TextSearch.Pair> expected = Arrays.asList(
                 new TextSearch.Pair(0, 0),
                 new TextSearch.Pair(1, 2)

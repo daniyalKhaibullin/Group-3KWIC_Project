@@ -1,9 +1,3 @@
-/***
- *V1.1 a search class which uses hashMap for searching
- *V1.2 adding more search methods and cleaning the code
- */
-
-
 package de.uni.tuebingen.sfs.java2;
 
 import lombok.Getter;
@@ -11,29 +5,20 @@ import lombok.Getter;
 import java.io.Serializable;
 import java.util.*;
 
-
 public class TextSearch implements Serializable {
     private static final long serialVersionUID = 42L;
-    // Map to store tokens, posTag and lemma as keys and lists of indices as values
-    // map a string to a list of integers which are the index position of the sentence that has that string
-    private final Map<String, List<Pair>> tokenIndex = new HashMap<>();
-    private final Map<String, List<Pair>> posTagIndex = new HashMap<>();
-    private final Map<String, List<Pair>> lemmaIndex = new HashMap<>();
 
-    /**
-     * constructor
-     */
+    private final Map<String, List<Pair>> tokenIndex = new HashMap<>();
+    private final Map<String, List<Pair>> tokenIndexLowerCase = new HashMap<>();
+    private final Map<String, List<Pair>> posTagIndex = new HashMap<>();
+    private final Map<String, List<Pair>> posTagIndexLowerCase = new HashMap<>();
+    private final Map<String, List<Pair>> lemmaIndex = new HashMap<>();
+    private final Map<String, List<Pair>> lemmaIndexLowerCase = new HashMap<>();
+
     public TextSearch(List<List<String>> tokens, List<List<String>> posTags, List<List<String>> lemmas) {
         indexText(tokens, posTags, lemmas);
     }
 
-    /**
-     * Indexes tokens, POS tags, and lemmas from input lists.
-     *
-     * @param tokens  List of tokenized sentences
-     * @param posTags List of POS tags for tokens
-     * @param lemmas  List of lemmatized tokens
-     */
     public void indexText(List<List<String>> tokens, List<List<String>> posTags, List<List<String>> lemmas) {
         for (int i = 0; i < tokens.size(); i++) {
             List<String> tokenList = tokens.get(i);
@@ -47,119 +32,124 @@ public class TextSearch implements Serializable {
 
                 Pair pair = new Pair(i, j);
 
+                // Populate tokenIndex
                 tokenIndex.computeIfAbsent(token, k -> new ArrayList<>()).add(pair);
+
+                // Populate tokenIndexLowerCase
+                if (token != null) {
+                    String tokenLower = token.toLowerCase();
+                    tokenIndexLowerCase.computeIfAbsent(tokenLower, k -> new ArrayList<>()).add(pair);
+                }
+
+                // Populate posTagIndex
                 posTagIndex.computeIfAbsent(posTag, k -> new ArrayList<>()).add(pair);
+
+                // Populate posTagIndexLowerCase
+                if (posTag != null) {
+                    String posTagLower = posTag.toLowerCase();
+                    posTagIndexLowerCase.computeIfAbsent(posTagLower, k -> new ArrayList<>()).add(pair);
+                }
+
+                // Populate lemmaIndex
                 lemmaIndex.computeIfAbsent(lemma, k -> new ArrayList<>()).add(pair);
+
+                // Populate lemmaIndexLowerCase
+                if (lemma != null) {
+                    String lemmaLower = lemma.toLowerCase();
+                    lemmaIndexLowerCase.computeIfAbsent(lemmaLower, k -> new ArrayList<>()).add(pair);
+                }
             }
         }
     }
 
-    // Method to search for indices of a token
-    public List<Pair> searchByToken(String token) {
-        // Return the list of indices for the given token, or an empty list if token not found
-        return tokenIndex.getOrDefault(token, new ArrayList<>());
+    public List<Pair> searchByToken(String token, boolean caseSensitive) {
+        if (!caseSensitive) {
+            return tokenIndexLowerCase.getOrDefault(token.toLowerCase(), Collections.emptyList());
+        }
+        return tokenIndex.getOrDefault(token, Collections.emptyList());
     }
 
-    // Method to search for indices of a tag
-    public List<Pair> searchByTag(String tag) {
-        // Return the list of indices for the given tag, or an empty list if tag not found
-        return posTagIndex.getOrDefault(tag, new ArrayList<>());
+    public List<Pair> searchByTag(String tag, boolean caseSensitive) {
+        if (!caseSensitive) {
+            return posTagIndexLowerCase.getOrDefault(tag.toLowerCase(), Collections.emptyList());
+        }
+        return posTagIndex.getOrDefault(tag, Collections.emptyList());
     }
 
-    // Method to search for indices of a lemm
-    public List<Pair> searchByLemm(String lemm) {
-        // Return the list of indices for the given lemm, or an empty list if lemm not found
-        return lemmaIndex.getOrDefault(lemm, new ArrayList<>());
+    public List<Pair> searchByLemm(String lemm, boolean caseSensitive) {
+        if (!caseSensitive) {
+            return lemmaIndexLowerCase.getOrDefault(lemm.toLowerCase(), Collections.emptyList());
+        }
+        return lemmaIndex.getOrDefault(lemm, Collections.emptyList());
     }
 
-    // Method to search for indices of a lemm and  token
-    public List<Pair> searchByTokenAndLemm(String token, String lemm) {
+    public List<Pair> searchByTokenAndLemm(String token, String lemm, boolean caseSensitive) {
         List<Pair> result = new ArrayList<>();
-        List<Pair> tokenPairs = tokenIndex.getOrDefault(token, new ArrayList<>());
-        List<Pair> lemmaPairs = lemmaIndex.getOrDefault(lemm, new ArrayList<>());
+        List<Pair> tokenPairs = caseSensitive ? tokenIndex.get(token) : tokenIndexLowerCase.get(token.toLowerCase());
+        List<Pair> lemmaPairs = caseSensitive ? lemmaIndex.get(lemm) : lemmaIndexLowerCase.get(lemm.toLowerCase());
 
-        // Find intersection of pairs
-        for (Pair tokenPair : tokenPairs) {
-            if (lemmaPairs.contains(tokenPair)) {
-                result.add(tokenPair);
+        if (tokenPairs != null && lemmaPairs != null) {
+            for (Pair tokenPair : tokenPairs) {
+                if (lemmaPairs.contains(tokenPair)) {
+                    result.add(tokenPair);
+                }
             }
         }
         return result;
-
     }
 
-    // Method to search for indices of a posTag and  token
-    public List<Pair> searchByTokenAndTag(String token, String tag) {
+    public List<Pair> searchByTokenAndTag(String token, String tag, boolean caseSensitive) {
         List<Pair> result = new ArrayList<>();
-        List<Pair> tokenPairs = tokenIndex.getOrDefault(token, new ArrayList<>());
-        List<Pair> tagPairs = posTagIndex.getOrDefault(tag, new ArrayList<>());
-        for (Pair tokenPair : tokenPairs) {
-            if (tagPairs.contains(tokenPair)) {
-                result.add(tokenPair);
+        List<Pair> tokenPairs = caseSensitive ? tokenIndex.get(token) : tokenIndexLowerCase.get(token.toLowerCase());
+        List<Pair> tagPairs = caseSensitive ? posTagIndex.get(tag) : posTagIndexLowerCase.get(tag.toLowerCase());
+
+        if (tokenPairs != null && tagPairs != null) {
+            for (Pair tokenPair : tokenPairs) {
+                if (tagPairs.contains(tokenPair)) {
+                    result.add(tokenPair);
+                }
             }
         }
         return result;
-
     }
 
-    // Method to search for indices of a lemm and  tag
-    public List<Pair> searchByTagAndLemm(String tag, String lemm) {
+    public List<Pair> searchByTagAndLemm(String tag, String lemm, boolean caseSensitive) {
         List<Pair> result = new ArrayList<>();
-        List<Pair> lemmaPairs = lemmaIndex.getOrDefault(lemm, new ArrayList<>());
-        List<Pair> tagPairs = posTagIndex.getOrDefault(tag, new ArrayList<>());
-        for (Pair lemmaPair : lemmaPairs) {
-            if (tagPairs.contains(lemmaPair)) {
-                result.add(lemmaPair);
+        List<Pair> tagPairs = caseSensitive ? posTagIndex.get(tag) : posTagIndexLowerCase.get(tag.toLowerCase());
+        List<Pair> lemmaPairs = caseSensitive ? lemmaIndex.get(lemm) : lemmaIndexLowerCase.get(lemm.toLowerCase());
+
+        if (tagPairs != null && lemmaPairs != null) {
+            for (Pair lemmaPair : lemmaPairs) {
+                if (tagPairs.contains(lemmaPair)) {
+                    result.add(lemmaPair);
+                }
             }
         }
         return result;
-
     }
 
-    // Method to search for indices of a lemm and  token and tag
-    public List<Pair> searchByTokenAndLemmAndTag(String token, String lemm, String tag) {
+    public List<Pair> searchByTokenAndLemmAndTag(String token, String lemm, String tag, boolean caseSensitive) {
         List<Pair> result = new ArrayList<>();
-        List<Pair> lemmaPairs = lemmaIndex.getOrDefault(lemm, new ArrayList<>());
-        List<Pair> tagPairs = posTagIndex.getOrDefault(tag, new ArrayList<>());
-        List<Pair> tokenPairs = tokenIndex.getOrDefault(token, new ArrayList<>());
-        for (Pair tokenPair : tokenPairs) {
-            if (lemmaPairs.contains(tokenPair) && tagPairs.contains(tokenPair)) {
-                result.add(tokenPair);
+        List<Pair> tokenPairs = caseSensitive ? tokenIndex.get(token) : tokenIndexLowerCase.get(token.toLowerCase());
+        List<Pair> lemmaPairs = caseSensitive ? lemmaIndex.get(lemm) : lemmaIndexLowerCase.get(lemm.toLowerCase());
+        List<Pair> tagPairs = caseSensitive ? posTagIndex.get(tag) : posTagIndexLowerCase.get(tag.toLowerCase());
+
+        if (tokenPairs != null && lemmaPairs != null && tagPairs != null) {
+            for (Pair tokenPair : tokenPairs) {
+                if (lemmaPairs.contains(tokenPair) && tagPairs.contains(tokenPair)) {
+                    result.add(tokenPair);
+                }
             }
         }
-
         return result;
-
     }
 
-
-    /**
-     * A helper class to store a pair of indices: sentence index and token index.
-     */
     @Getter
     public static class Pair implements Serializable {
         private static final long serialVersionUID = 42L;
-        /**
-         * -- GETTER --
-         * Gets the sentence index.
-         *
-         * @return The index of the sentence
-         */
         private final int sentenceIndex;
-        /**
-         * -- GETTER --
-         * Gets the token index.
-         *
-         * @return The index of the token within the sentence
-         */
         private final int tokenIndex;
 
-        /**
-         * Constructs a Pair with the given sentence and token indices.
-         *
-         * @param sentenceIndex The index of the sentence
-         * @param tokenIndex    The index of the token within the sentence
-         */
         public Pair(int sentenceIndex, int tokenIndex) {
             this.sentenceIndex = sentenceIndex;
             this.tokenIndex = tokenIndex;
@@ -183,7 +173,4 @@ public class TextSearch implements Serializable {
             return "(" + sentenceIndex + ", " + tokenIndex + ")";
         }
     }
-
-
 }
-

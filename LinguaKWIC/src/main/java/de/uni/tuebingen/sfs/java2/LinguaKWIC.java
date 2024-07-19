@@ -48,6 +48,7 @@ public class LinguaKWIC implements Serializable {
     private List<List<String>> tokens = new ArrayList<>();
     private List<List<String>> posTags = new ArrayList<>();
     private List<List<String>> lemmas = new ArrayList<>();
+
     private TextSearch textSearch;
 
     /**
@@ -258,6 +259,12 @@ public class LinguaKWIC implements Serializable {
 
         loadModelsAndProcessText();
         createTextSearchObject();
+
+        if (textSearch == null) {
+            System.err.println("TextSearch object creation failed.");
+        } else {
+            System.out.println("TextSearch object created successfully.");
+        }
     }
 
     // Testing the class functionalities (feel free to remove this in production)
@@ -270,7 +277,7 @@ public class LinguaKWIC implements Serializable {
 //        System.out.println(linguaKWIC.getPosTags());
 //        System.out.println(linguaKWIC.getLemmas());
 //        System.out.println(linguaKWIC.getLang());
-        List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne");
+        List<TextSearch.Pair> results = linguaKWIC.getTextSearch().searchByToken("Sonne", false);
         System.out.println(results.get(0).getSentenceIndex());
         System.out.println("Search results for 'Sonne': " + results);
 
