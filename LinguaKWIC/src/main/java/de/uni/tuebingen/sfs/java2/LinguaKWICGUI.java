@@ -197,15 +197,7 @@ public class LinguaKWICGUI extends JFrame {
         // Set fonts and colors
         // Top
         searchField.setFont(INPUT_FONT);
-
-
         exactWordField.setFont(INPUT_FONT);
-//        exactWordField.setBackground(new Color(191, 155, 166));
-//        wordLemmaField.setFont(INPUT_FONT);
-//        wordLemmaField.setBackground(new Color(186, 159, 178));
-//        wordPOSTagField.setFont(INPUT_FONT);
-//        wordPOSTagField.setBackground(new Color(192, 174, 182));
-
         neighborRightSpinner.setFont(FONT);
         neighborLeftSpinner.setFont(FONT);
 
@@ -341,7 +333,6 @@ public class LinguaKWICGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // Create a new JFileChooser
-
             JFileChooser fileChooser = new JFileChooser();
             FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
             fileChooser.setFileFilter(filter);
@@ -363,14 +354,12 @@ public class LinguaKWICGUI extends JFrame {
             JDialog advancedDialog = new JDialog(LinguaKWICGUI.this, "Advanced Search", true); // Use LinguaKWICGUI.this as the parent frame
             advancedDialog.setSize(500, 300);
             advancedDialog.setLayout(new BorderLayout());
-//            advancedDialog.setBackground(PRIMARY_COLOR);
 
             // Center the dialog on the screen
             advancedDialog.setLocationRelativeTo(LinguaKWICGUI.this);
 
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-//            contentPanel.setBackground(PRIMARY_COLOR);
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
             JLabel infoLabel = new JLabel("<html><p style='text-align:center;'>In Advanced search, you will provide us a topic in the language that you want and we will search in Wikipedia for your topic :)</p></html>");
@@ -381,7 +370,6 @@ public class LinguaKWICGUI extends JFrame {
 
             JPanel formPanel = new JPanel();
             formPanel.setLayout(new GridLayout(2, 2, 10, 10));
-//            formPanel.setBackground(PRIMARY_COLOR);
 
             JLabel topicLabel = new JLabel("Topic:");
             topicLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -405,7 +393,6 @@ public class LinguaKWICGUI extends JFrame {
             contentPanel.add(Box.createVerticalStrut(20));
 
             JButton okButton = new JButton("OK");
-//            okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> {
                 try {
@@ -663,30 +650,36 @@ public class LinguaKWICGUI extends JFrame {
             JDialog advancedDialog = new JDialog(this, "Search History", true);
             advancedDialog.setSize(500, 500);
             advancedDialog.setLayout(new BorderLayout());
-//            advancedDialog.setBackground(PRIMARY_COLOR);
 
             // Center the dialog on the screen
             advancedDialog.setLocationRelativeTo(this);
-
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-//            contentPanel.setBackground(PRIMARY_COLOR);
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
+            
             JLabel infoLabel = new JLabel(selectedHistory.toString());
-//            infoLabel.setBackground(PRIMARY_COLOR);
             infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(infoLabel);
             contentPanel.add(Box.createVerticalStrut(20));
 
             JButton okButton = new JButton("OK");
-//            okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> {
                 advancedDialog.dispose();
             });
             contentPanel.add(okButton);
             advancedDialog.add(contentPanel, BorderLayout.CENTER);
+            if (isDarkMode) {
+                contentPanel.setBackground(DARK_PRIMARY_COLOR);
+                infoLabel.setBackground(DARK_PRIMARY_COLOR);
+                advancedDialog.setBackground(DARK_PRIMARY_COLOR);
+                okButton.setBackground(DARK_BUTTON_BACKGROUND);
+            } else {
+                contentPanel.setBackground(LIGHT_PRIMARY_COLOR);
+                infoLabel.setBackground(LIGHT_PRIMARY_COLOR);
+                advancedDialog.setBackground(LIGHT_PRIMARY_COLOR);
+                okButton.setBackground(LIGHT_BUTTON_BACKGROUND);
+            }
             advancedDialog.setVisible(true);
         }
     }
