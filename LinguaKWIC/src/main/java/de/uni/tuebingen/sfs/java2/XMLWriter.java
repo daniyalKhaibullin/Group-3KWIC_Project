@@ -51,6 +51,7 @@ public class XMLWriter {
      * @param webScrapedArticles
      * @param outputFilePath
      */
+
     public static void writeXML(String sessionId, String startTime, String endTime,
                                 String user, List<LinguaKWIC> uploadedTexts,
                                 List<LinguaKWIC> webScrapedArticles, String outputFilePath) {
