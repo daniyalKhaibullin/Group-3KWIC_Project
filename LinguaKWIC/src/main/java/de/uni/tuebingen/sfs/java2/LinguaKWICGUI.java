@@ -31,6 +31,23 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color TEXT_AREA_BACKGROUND = new Color(200, 180, 220);
     private static final Color TEXT_AREA_BG_SECOND = new Color(170, 140, 185);
     private static final Color BUTTON_BACKGROUND = new Color(234, 221, 231);
+
+    private static final Color LIGHT_PRIMARY_COLOR = new Color(179, 159, 230); // A lighter purple
+    private static final Color LIGHT_SECONDARY_COLOR = new Color(127, 160, 130); // Softer green
+    private static final Color LIGHT_TEXT_FIELD_BACKGROUND = new Color(255, 255, 255); // White
+    private static final Color LIGHT_TEXT_AREA_BACKGROUND = new Color(245, 245, 245); // Light gray
+    private static final Color LIGHT_BUTTON_BACKGROUND = new Color(200, 200, 255); // Light purple
+    private static final Color LIGHT_FONT_COLOR = new Color(40, 40, 40); // Dark gray
+
+
+    // Define colors and fonts for dark mode
+    private static final Color DARK_PRIMARY_COLOR = new Color(102, 102, 153); // Darker purple
+    private static final Color DARK_SECONDARY_COLOR = new Color(56, 78, 58); // Darker green
+    private static final Color DARK_TEXT_FIELD_BACKGROUND = new Color(40, 40, 40); // Dark gray
+    private static final Color DARK_TEXT_AREA_BACKGROUND = new Color(60, 60, 60); // Medium dark gray
+    private static final Color DARK_BUTTON_BACKGROUND = new Color(80, 80, 120); // Dark purple
+    private static final Color DARK_FONT_COLOR = new Color(220, 220, 220); // Light gray
+
     private static final Font FONT = new Font("Phosphate", Font.PLAIN, 15);
     private static final Font INPUT_FONT = new Font("Papyrus", Font.BOLD, 15);
 
@@ -67,10 +84,23 @@ public class LinguaKWICGUI extends JFrame {
 
     private static Queue<History> recentHistory = new ArrayDeque<>();
 
+    //Panels
+    public JPanel rootPanel = new JPanel(new BorderLayout());
+    public JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+    public JPanel leftPanel = new JPanel(new BorderLayout());
+    public JPanel recentPanel = new JPanel(new BorderLayout());
+    public JPanel optionsPanel = new JPanel(new GridBagLayout());
+    public JPanel centerPanel = new JPanel(new BorderLayout());
+    public JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+    // Theme toggle button
+    private JButton themeToggleButton;
+    private boolean isDarkMode = false;
 
     public LinguaKWICGUI() {
         initializeComponents();
         setStyles();
+        setTheme();
         createLayout();
     }
 
@@ -82,6 +112,15 @@ public class LinguaKWICGUI extends JFrame {
         advanceSearchButton.addActionListener(new AdvanceSearchButtonListener());
         browseFileButton = new JButton("BROWSE FILE");
         browseFileButton.addActionListener(new BrowseButtonHandler());
+        // Theme toggle button setup
+        themeToggleButton = new JButton("Toggle Theme");
+        themeToggleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                isDarkMode = !isDarkMode;
+                setTheme();
+            }
+        });
 
         // West components
         exactWordCheckBox = new JCheckBox("EXACT WORD");
@@ -139,11 +178,9 @@ public class LinguaKWICGUI extends JFrame {
         recentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         recentList.setLayoutOrientation(JList.VERTICAL);
         recentList.setVisibleRowCount(-1);
-        recentList.setVisibleRowCount(15); // Adjust based on your preferred visible rows
-        // Add JList to a JScrollPane if needed
+        recentList.setVisibleRowCount(15);
         JScrollPane scrollPane = new JScrollPane(recentList);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
 
         recentList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -159,44 +196,24 @@ public class LinguaKWICGUI extends JFrame {
     private void setStyles() {
         // Set fonts and colors
         // Top
-        advanceSearchButton.setBackground(BUTTON_BACKGROUND);
         searchField.setFont(INPUT_FONT);
-        searchField.setBackground(TEXT_FIELD_BACKGROUND);
-        browseFileButton.setBackground(BUTTON_BACKGROUND);
 
-        // West
-        exactWordCheckBox.setBackground(SECONDARY_COLOR);
-        wordLemmaCheckBox.setBackground(SECONDARY_COLOR);
-        wordPOSTagCheckBox.setBackground(SECONDARY_COLOR);
 
         exactWordField.setFont(INPUT_FONT);
-        exactWordField.setBackground(new Color(191, 155, 166));
-        wordLemmaField.setFont(INPUT_FONT);
-        wordLemmaField.setBackground(new Color(186, 159, 178));
-        wordPOSTagField.setFont(INPUT_FONT);
-        wordPOSTagField.setBackground(new Color(192, 174, 182));
-
-        caseSensitiveCheckBox.setBackground(SECONDARY_COLOR);
-        wholeSentenceRadioButton.setBackground(SECONDARY_COLOR);
-        neighborRadioButton.setBackground(SECONDARY_COLOR);
+//        exactWordField.setBackground(new Color(191, 155, 166));
+//        wordLemmaField.setFont(INPUT_FONT);
+//        wordLemmaField.setBackground(new Color(186, 159, 178));
+//        wordPOSTagField.setFont(INPUT_FONT);
+//        wordPOSTagField.setBackground(new Color(192, 174, 182));
 
         neighborRightSpinner.setFont(FONT);
-        neighborRightSpinner.setBackground(PRIMARY_COLOR);
         neighborLeftSpinner.setFont(FONT);
-        neighborLeftSpinner.setBackground(PRIMARY_COLOR);
-
-        searchButton.setBackground(BUTTON_BACKGROUND);
-
-        // South
-        saveButton.setBackground(BUTTON_BACKGROUND);
 
         // Center
         resultTextArea.setFont(INPUT_FONT);
-        resultTextArea.setBackground(TEXT_AREA_BACKGROUND);
         resultTextArea.setBorder(BorderFactory.createLineBorder(Color.WHITE));
         //
         recentList.setFont(INPUT_FONT);
-        recentList.setBackground(TEXT_AREA_BG_SECOND);
         recentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         recentList.setLayoutOrientation(JList.VERTICAL);
         recentList.setVisibleRowCount(15);
@@ -212,30 +229,17 @@ public class LinguaKWICGUI extends JFrame {
         setLocationRelativeTo(null);
 
         // Main panel using BorderLayout
-        JPanel rootPanel = new JPanel(new BorderLayout());
         setContentPane(rootPanel);
 
         // Top Panel (North)
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        topPanel.setBackground(PRIMARY_COLOR);
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
         topPanel.add(new JLabel("Search in:"));
         topPanel.add(searchField);
         topPanel.add(browseFileButton);
         topPanel.add(advanceSearchButton);
-
+        topPanel.add(themeToggleButton, BorderLayout.EAST);
         rootPanel.add(topPanel, BorderLayout.NORTH);
-
-        // Left Panel (Options and Recent Text)
-        JPanel leftPanel = new JPanel(new BorderLayout());
-
-        // Recent Text Panel
-        JPanel recentPanel = new JPanel(new BorderLayout());
-        recentPanel.setBackground(PRIMARY_COLOR);
         recentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-
         recentPanel.add(new JLabel("History of Search (click for see more details):"), BorderLayout.NORTH);
         JScrollPane recentScrollPane = new JScrollPane(recentList);
         recentScrollPane.setPreferredSize(new Dimension(200, 200));
@@ -244,9 +248,6 @@ public class LinguaKWICGUI extends JFrame {
 
         leftPanel.add(recentPanel, BorderLayout.CENTER);
 
-        // Options Panel
-        JPanel optionsPanel = new JPanel(new GridBagLayout());
-        optionsPanel.setBackground(PRIMARY_COLOR);
         optionsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -314,9 +315,6 @@ public class LinguaKWICGUI extends JFrame {
         // Add leftPanel to rootPanel on the WEST
         rootPanel.add(leftPanel, BorderLayout.WEST);
 
-        // Center Panel (Text Area)
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(PRIMARY_COLOR);
         centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JScrollPane resultScrollPane = new JScrollPane(resultTextArea);
@@ -325,15 +323,11 @@ public class LinguaKWICGUI extends JFrame {
 
         rootPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // South Panel (Save Button)
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.setBackground(PRIMARY_COLOR);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         bottomPanel.add(saveButton);
 
         rootPanel.add(bottomPanel, BorderLayout.SOUTH);
-
 
         exactWordCheckBox.addActionListener(e -> exactWordField.setEnabled(exactWordCheckBox.isSelected()));
         wordLemmaCheckBox.addActionListener(e -> wordLemmaField.setEnabled(wordLemmaCheckBox.isSelected()));
@@ -369,14 +363,14 @@ public class LinguaKWICGUI extends JFrame {
             JDialog advancedDialog = new JDialog(LinguaKWICGUI.this, "Advanced Search", true); // Use LinguaKWICGUI.this as the parent frame
             advancedDialog.setSize(500, 300);
             advancedDialog.setLayout(new BorderLayout());
-            advancedDialog.setBackground(PRIMARY_COLOR);
+//            advancedDialog.setBackground(PRIMARY_COLOR);
 
             // Center the dialog on the screen
             advancedDialog.setLocationRelativeTo(LinguaKWICGUI.this);
 
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-            contentPanel.setBackground(PRIMARY_COLOR);
+//            contentPanel.setBackground(PRIMARY_COLOR);
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
             JLabel infoLabel = new JLabel("<html><p style='text-align:center;'>In Advanced search, you will provide us a topic in the language that you want and we will search in Wikipedia for your topic :)</p></html>");
@@ -387,7 +381,7 @@ public class LinguaKWICGUI extends JFrame {
 
             JPanel formPanel = new JPanel();
             formPanel.setLayout(new GridLayout(2, 2, 10, 10));
-            formPanel.setBackground(PRIMARY_COLOR);
+//            formPanel.setBackground(PRIMARY_COLOR);
 
             JLabel topicLabel = new JLabel("Topic:");
             topicLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -411,7 +405,7 @@ public class LinguaKWICGUI extends JFrame {
             contentPanel.add(Box.createVerticalStrut(20));
 
             JButton okButton = new JButton("OK");
-            okButton.setBackground(BUTTON_BACKGROUND);
+//            okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> {
                 try {
@@ -432,6 +426,17 @@ public class LinguaKWICGUI extends JFrame {
             contentPanel.add(okButton);
 
             advancedDialog.add(contentPanel, BorderLayout.CENTER);
+            if (isDarkMode) {
+                contentPanel.setBackground(DARK_PRIMARY_COLOR);
+                formPanel.setBackground(DARK_PRIMARY_COLOR);
+                advancedDialog.setBackground(DARK_PRIMARY_COLOR);
+                okButton.setBackground(DARK_BUTTON_BACKGROUND);
+            } else {
+                contentPanel.setBackground(LIGHT_PRIMARY_COLOR);
+                formPanel.setBackground(LIGHT_PRIMARY_COLOR);
+                advancedDialog.setBackground(LIGHT_PRIMARY_COLOR);
+                okButton.setBackground(LIGHT_BUTTON_BACKGROUND);
+            }
             advancedDialog.setVisible(true);
         }
     }
@@ -440,36 +445,36 @@ public class LinguaKWICGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                java.util.List<UploadedFile> uploadedFiles = new ArrayList<>();
-                java.util.List<ProcessedFile> processedFiles = new ArrayList<>();
-                java.util.List<WikipediaArticle> articles = new ArrayList<>();
-
-                if (selectedFile.exists()) {
-                    uploadedFiles.add(new UploadedFile(selectedFile.getName(), linguaKWIC.getText()));
-                    processedFiles.add(new ProcessedFile(selectedFile.getName(), linguaKWIC.getTokens().stream()
-                            .flatMap(java.util.List::stream)
-                            .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
-                            .flatMap(java.util.List::stream)
-                            .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
-                            .flatMap(List::stream)
-                            .collect(Collectors.toList())));
-                }
-                if (isValidURL(searchField.getText())) {
-                    articles.add(new WikipediaArticle(searchField.getText(), linguaKWIC.getText()));
-                }
-
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Specify a file to save");
-                FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
-                fileChooser.setFileFilter(filter);
-                fileChooser.setAcceptAllFileFilterUsed(false);
-
-                int userSelection = fileChooser.showSaveDialog(null);
-                if (userSelection == JFileChooser.APPROVE_OPTION) {
-                    File fileToSave = fileChooser.getSelectedFile();
-                    XMLWriter xmlWriter = new XMLWriter();
-                    xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
-                }
+//                java.util.List<UploadedFile> uploadedFiles = new ArrayList<>();
+//                java.util.List<ProcessedFile> processedFiles = new ArrayList<>();
+//                java.util.List<WikipediaArticle> articles = new ArrayList<>();
+//
+//                if (selectedFile.exists()) {
+//                    uploadedFiles.add(new UploadedFile(selectedFile.getName(), linguaKWIC.getText()));
+//                    processedFiles.add(new ProcessedFile(selectedFile.getName(), linguaKWIC.getTokens().stream()
+//                            .flatMap(java.util.List::stream)
+//                            .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
+//                            .flatMap(java.util.List::stream)
+//                            .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
+//                            .flatMap(List::stream)
+//                            .collect(Collectors.toList())));
+//                }
+//                if (isValidURL(searchField.getText())) {
+//                    articles.add(new WikipediaArticle(searchField.getText(), linguaKWIC.getText()));
+//                }
+//
+//                JFileChooser fileChooser = new JFileChooser();
+//                fileChooser.setDialogTitle("Specify a file to save");
+//                FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
+//                fileChooser.setFileFilter(filter);
+//                fileChooser.setAcceptAllFileFilterUsed(false);
+//
+//                int userSelection = fileChooser.showSaveDialog(null);
+//                if (userSelection == JFileChooser.APPROVE_OPTION) {
+//                    File fileToSave = fileChooser.getSelectedFile();
+//                    XMLWriter xmlWriter = new XMLWriter();
+//                    xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
+//                }
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Error saving file: Something went wrong ", "Error", JOptionPane.ERROR_MESSAGE);
@@ -658,24 +663,24 @@ public class LinguaKWICGUI extends JFrame {
             JDialog advancedDialog = new JDialog(this, "Search History", true);
             advancedDialog.setSize(500, 500);
             advancedDialog.setLayout(new BorderLayout());
-            advancedDialog.setBackground(PRIMARY_COLOR);
+//            advancedDialog.setBackground(PRIMARY_COLOR);
 
             // Center the dialog on the screen
             advancedDialog.setLocationRelativeTo(this);
 
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-            contentPanel.setBackground(PRIMARY_COLOR);
+//            contentPanel.setBackground(PRIMARY_COLOR);
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
             JLabel infoLabel = new JLabel(selectedHistory.toString());
-            infoLabel.setBackground(PRIMARY_COLOR);
+//            infoLabel.setBackground(PRIMARY_COLOR);
             infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(infoLabel);
             contentPanel.add(Box.createVerticalStrut(20));
 
             JButton okButton = new JButton("OK");
-            okButton.setBackground(BUTTON_BACKGROUND);
+//            okButton.setBackground(BUTTON_BACKGROUND);
             okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             okButton.addActionListener(event -> {
                 advancedDialog.dispose();
@@ -715,6 +720,47 @@ public class LinguaKWICGUI extends JFrame {
         List<History> historyList = new ArrayList<>(recentHistory);
         return historyList.get(index);
     }
+
+    private void setTheme() {
+        Color primaryColor = isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR;
+        Color secondaryColor = isDarkMode ? DARK_SECONDARY_COLOR : LIGHT_SECONDARY_COLOR;
+        Color textFieldBackground = isDarkMode ? DARK_TEXT_FIELD_BACKGROUND : LIGHT_TEXT_FIELD_BACKGROUND;
+        Color textAreaBackground = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
+        Color textAreaBgSecond = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
+        Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
+
+        // Apply colors to components
+        getContentPane().setBackground(primaryColor);
+        topPanel.setBackground(primaryColor);
+        leftPanel.setBackground(primaryColor);
+        bottomPanel.setBackground(primaryColor);
+        centerPanel.setBackground(primaryColor);
+        optionsPanel.setBackground(primaryColor);
+        recentPanel.setBackground(primaryColor);
+        rootPanel.setBackground(primaryColor);
+
+        searchField.setBackground(textFieldBackground);
+        browseFileButton.setBackground(buttonBackground);
+        advanceSearchButton.setBackground(buttonBackground);
+        exactWordCheckBox.setBackground(secondaryColor);
+        wordLemmaCheckBox.setBackground(secondaryColor);
+        wordPOSTagCheckBox.setBackground(secondaryColor);
+        caseSensitiveCheckBox.setBackground(secondaryColor);
+        exactWordField.setBackground(textFieldBackground);
+        wordLemmaField.setBackground(textFieldBackground);
+        wordPOSTagField.setBackground(textFieldBackground);
+        wholeSentenceRadioButton.setBackground(secondaryColor);
+        neighborRadioButton.setBackground(secondaryColor);
+        neighborRightSpinner.setBackground(secondaryColor);
+        neighborLeftSpinner.setBackground(secondaryColor);
+        themeToggleButton.setBackground(buttonBackground);
+        searchButton.setBackground(buttonBackground);
+        saveButton.setBackground(buttonBackground);
+
+        resultTextArea.setBackground(textAreaBackground);
+        recentList.setBackground(textAreaBgSecond);
+    }
+
 
 
     public static void main(String[] args) {
