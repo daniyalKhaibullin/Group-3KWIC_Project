@@ -41,26 +41,19 @@ import javax.xml.stream.events.XMLEvent;
  * - Ensure all data passed to the method is correctly formatted and non-null to avoid exceptions.
  */
 public class XMLWriter {
-    /**
-     * Main writeXML method
-     * @param sessionId
-     * @param startTime
-     * @param endTime
-     * @param user
-     * @param uploadedTexts
-     * @param webScrapedArticles
-     * @param outputFilePath
-     */
 
     public static void writeXML(String sessionId, String startTime, String endTime,
                                 String user, List<LinguaKWIC> uploadedTexts,
-                                List<LinguaKWIC> webScrapedArticles, String outputFilePath) {
+                                List<LinguaKWIC> webScrapedArticles) {
         try {
             // Ensure the output directory exists
             File dir = new File("xml_outputs");
             if (!dir.exists()) {
                 dir.mkdirs();
             }
+
+            // Create a unique output file path using the current timestamp
+            String outputFilePath = "xml_outputs/output_" + System.currentTimeMillis() + ".xml";
 
             XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
             OutputStream outputStream = new FileOutputStream(outputFilePath);
@@ -70,16 +63,13 @@ public class XMLWriter {
             XMLEvent end = eventFactory.createDTD("\n");
             XMLEvent tab = eventFactory.createDTD("\t");
 
-            // Start Document
             eventWriter.add(eventFactory.createStartDocument("UTF-8", "1.0"));
             eventWriter.add(end);
 
-            // Start KWICApplication element
             StartElement kwicStartElement = eventFactory.createStartElement("", "", "KWICApplication");
             eventWriter.add(kwicStartElement);
             eventWriter.add(end);
 
-            // Start Session element
             StartElement sessionStartElement = eventFactory.createStartElement("", "", "Session");
             eventWriter.add(tab);
             eventWriter.add(sessionStartElement);
@@ -90,7 +80,6 @@ public class XMLWriter {
             createNode(eventWriter, "EndTime", endTime, tab);
             createNode(eventWriter, "User", user, tab);
 
-            // Uploaded Texts
             StartElement uploadedTextsStartElement = eventFactory.createStartElement("", "", "UploadedTexts");
             eventWriter.add(tab);
             eventWriter.add(uploadedTextsStartElement);
@@ -106,7 +95,6 @@ public class XMLWriter {
                 createNode(eventWriter, "FileName", textFile.getFileName().getName(), tab, tab);
                 createNode(eventWriter, "Content", textFile.getText(), tab, tab);
 
-                // Linguistic Processing
                 StartElement linguisticProcessingStartElement = eventFactory.createStartElement("", "", "LinguisticProcessing");
                 eventWriter.add(tab);
                 eventWriter.add(tab);
@@ -114,6 +102,12 @@ public class XMLWriter {
                 eventWriter.add(end);
 
                 for (int i = 0; i < textFile.getSentences().size(); i++) {
+                    if (textFile.getTokens().get(i).size() != textFile.getPosTags().get(i).size() ||
+                            textFile.getTokens().get(i).size() != textFile.getLemmas().get(i).size()) {
+                        System.err.println("Mismatch in sizes of tokens, POS tags, and lemmas for sentence " + i);
+                        continue; // Skip this sentence
+                    }
+
                     StartElement sentenceStartElement = eventFactory.createStartElement("", "", "Sentence");
                     eventWriter.add(tab);
                     eventWriter.add(tab);
@@ -180,13 +174,11 @@ public class XMLWriter {
                 eventWriter.add(end);
             }
 
-
             EndElement uploadedTextsEndElement = eventFactory.createEndElement("", "", "UploadedTexts");
             eventWriter.add(tab);
             eventWriter.add(uploadedTextsEndElement);
             eventWriter.add(end);
 
-            // Web Scraped Content
             StartElement webScrapedContentStartElement = eventFactory.createStartElement("", "", "WebScrapedContent");
             eventWriter.add(tab);
             eventWriter.add(webScrapedContentStartElement);
@@ -202,7 +194,6 @@ public class XMLWriter {
                 createNode(eventWriter, "URL", article.getUrl().toString(), tab, tab);
                 createNode(eventWriter, "Content", article.getText(), tab, tab);
 
-                // Linguistic Processing
                 StartElement linguisticProcessingStartElement = eventFactory.createStartElement("", "", "LinguisticProcessing");
                 eventWriter.add(tab);
                 eventWriter.add(tab);
@@ -210,6 +201,12 @@ public class XMLWriter {
                 eventWriter.add(end);
 
                 for (int i = 0; i < article.getSentences().size(); i++) {
+                    if (article.getTokens().get(i).size() != article.getPosTags().get(i).size() ||
+                            article.getTokens().get(i).size() != article.getLemmas().get(i).size()) {
+                        System.err.println("Mismatch in sizes of tokens, POS tags, and lemmas for sentence " + i);
+                        continue; // Skip this sentence
+                    }
+
                     StartElement sentenceStartElement = eventFactory.createStartElement("", "", "Sentence");
                     eventWriter.add(tab);
                     eventWriter.add(tab);
@@ -281,13 +278,11 @@ public class XMLWriter {
             eventWriter.add(webScrapedContentEndElement);
             eventWriter.add(end);
 
-            // End Session element
             EndElement sessionEndElement = eventFactory.createEndElement("", "", "Session");
             eventWriter.add(tab);
             eventWriter.add(sessionEndElement);
             eventWriter.add(end);
 
-            // End KWICApplication element
             EndElement kwicEndElement = eventFactory.createEndElement("", "", "KWICApplication");
             eventWriter.add(kwicEndElement);
             eventWriter.add(end);
