@@ -180,6 +180,7 @@ public class XMLWriter {
                 eventWriter.add(end);
             }
 
+
             EndElement uploadedTextsEndElement = eventFactory.createEndElement("", "", "UploadedTexts");
             eventWriter.add(tab);
             eventWriter.add(uploadedTextsEndElement);
