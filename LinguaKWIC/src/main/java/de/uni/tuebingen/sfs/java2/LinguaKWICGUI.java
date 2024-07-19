@@ -25,12 +25,6 @@ import java.util.stream.Collectors;
 public class LinguaKWICGUI extends JFrame {
 
     // Define colors and fonts
-    private static final Color PRIMARY_COLOR = new Color(153, 153, 189);
-    private static final Color SECONDARY_COLOR = new Color(236, 242, 156);
-    private static final Color TEXT_FIELD_BACKGROUND = new Color(236, 242, 156);
-    private static final Color TEXT_AREA_BACKGROUND = new Color(200, 180, 220);
-    private static final Color TEXT_AREA_BG_SECOND = new Color(170, 140, 185);
-    private static final Color BUTTON_BACKGROUND = new Color(234, 221, 231);
 
     private static final Color LIGHT_PRIMARY_COLOR = new Color(179, 159, 230); // A lighter purple
     private static final Color LIGHT_SECONDARY_COLOR = new Color(127, 160, 130); // Softer green
@@ -95,11 +89,17 @@ public class LinguaKWICGUI extends JFrame {
 
     // Theme toggle button
     private JButton themeToggleButton;
-    private boolean isDarkMode = false;
+    private static boolean isDarkMode = false;
+
+    //JLables :
+    public JLabel target = new JLabel("Search in:");
+    public JLabel recent = new JLabel("History of Search (click for see more details):");
+    public JLabel rn = new JLabel("Right Neighbor:");
+    public JLabel ln = new JLabel("Left Neighbor:");
+    public JLabel result = new JLabel("Result:");
 
     public LinguaKWICGUI() {
         initializeComponents();
-        setStyles();
         setTheme();
         createLayout();
     }
@@ -124,8 +124,8 @@ public class LinguaKWICGUI extends JFrame {
 
         // West components
         exactWordCheckBox = new JCheckBox("EXACT WORD");
-        wordLemmaCheckBox = new JCheckBox("WORD LEMMA");
-        wordPOSTagCheckBox = new JCheckBox("WORD POS-TAG");
+        wordLemmaCheckBox = new JCheckBox("WORD'S LEMMA");
+        wordPOSTagCheckBox = new JCheckBox("POS-TAG");
         exactWordField = new RoundedTextField(15);
         wordLemmaField = new RoundedTextField(15);
         wordPOSTagField = new RoundedTextField(15);
@@ -192,19 +192,59 @@ public class LinguaKWICGUI extends JFrame {
 
     }
 
+    private void setTheme() {
+        Color primaryColor = isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR;
+        Color textFieldBackground = isDarkMode ? DARK_TEXT_FIELD_BACKGROUND : LIGHT_TEXT_FIELD_BACKGROUND;
+        Color textAreaBackground = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
+        Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
+        Color fontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_FONT_COLOR;
 
-    private void setStyles() {
-        // Set fonts and colors
-        // Top
-        searchField.setFont(INPUT_FONT);
-        exactWordField.setFont(INPUT_FONT);
-        neighborRightSpinner.setFont(FONT);
-        neighborLeftSpinner.setFont(FONT);
+        // Apply colors to panels
+        getContentPane().setBackground(primaryColor);
+        topPanel.setBackground(primaryColor);
+        leftPanel.setBackground(primaryColor);
+        bottomPanel.setBackground(primaryColor);
+        centerPanel.setBackground(primaryColor);
+        optionsPanel.setBackground(primaryColor);
+        recentPanel.setBackground(primaryColor);
+        rootPanel.setBackground(primaryColor);
 
-        // Center
+        // Apply colors to text fields and buttons
+        searchField.setBackground(textFieldBackground);
+        searchField.setForeground(fontColor);
+        browseFileButton.setBackground(buttonBackground);
+        browseFileButton.setForeground(fontColor);
+        advanceSearchButton.setBackground(buttonBackground);
+        advanceSearchButton.setForeground(fontColor);
+        exactWordCheckBox.setForeground(fontColor);
+        wordLemmaCheckBox.setForeground(fontColor);
+        wordPOSTagCheckBox.setForeground(fontColor);
+        caseSensitiveCheckBox.setForeground(fontColor);
+        exactWordField.setBackground(textFieldBackground);
+        exactWordField.setForeground(fontColor);
+        wordLemmaField.setBackground(textFieldBackground);
+        wordLemmaField.setForeground(fontColor);
+        wordPOSTagField.setBackground(textFieldBackground);
+        wordPOSTagField.setForeground(fontColor);
+        wholeSentenceRadioButton.setForeground(fontColor);
+        neighborRadioButton.setForeground(fontColor);
+        neighborRightSpinner.setForeground(fontColor);
+        neighborLeftSpinner.setForeground(fontColor);
+        themeToggleButton.setBackground(buttonBackground);
+        themeToggleButton.setForeground(fontColor);
+        searchButton.setBackground(buttonBackground);
+        searchButton.setForeground(fontColor);
+        saveButton.setBackground(buttonBackground);
+        saveButton.setForeground(fontColor);
+
+        // Apply colors and fonts to text area and list
+        resultTextArea.setBackground(textAreaBackground);
+        resultTextArea.setForeground(fontColor);
         resultTextArea.setFont(INPUT_FONT);
         resultTextArea.setBorder(BorderFactory.createLineBorder(Color.WHITE));
-        //
+
+        recentList.setBackground(textAreaBackground);
+        recentList.setForeground(fontColor);
         recentList.setFont(INPUT_FONT);
         recentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         recentList.setLayoutOrientation(JList.VERTICAL);
@@ -212,7 +252,28 @@ public class LinguaKWICGUI extends JFrame {
         recentList.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         recentList.setOpaque(true);
 
+        // Apply fonts to specific fields
+        searchField.setFont(INPUT_FONT);
+        exactWordField.setFont(INPUT_FONT);
+        neighborRightSpinner.setFont(FONT);
+        neighborLeftSpinner.setFont(FONT);
+
+        target.setForeground(fontColor);
+        target.setFont(FONT);
+
+        recent.setForeground(fontColor);
+        recent.setFont(FONT);
+
+        rn.setForeground(fontColor);
+        rn.setFont(FONT);
+
+        ln.setForeground(fontColor);
+        ln.setFont(FONT);
+
+        result.setForeground(fontColor);
+        result.setFont(FONT);
     }
+
 
     private void createLayout() {
         setTitle("LinguaKWIC");
@@ -225,14 +286,14 @@ public class LinguaKWICGUI extends JFrame {
 
         // Top Panel (North)
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        topPanel.add(new JLabel("Search in:"));
+        topPanel.add(target);
         topPanel.add(searchField);
         topPanel.add(browseFileButton);
         topPanel.add(advanceSearchButton);
         topPanel.add(themeToggleButton, BorderLayout.EAST);
         rootPanel.add(topPanel, BorderLayout.NORTH);
         recentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        recentPanel.add(new JLabel("History of Search (click for see more details):"), BorderLayout.NORTH);
+        recentPanel.add(recent, BorderLayout.NORTH);
         JScrollPane recentScrollPane = new JScrollPane(recentList);
         recentScrollPane.setPreferredSize(new Dimension(200, 200));
         recentPanel.add(recentScrollPane, BorderLayout.CENTER);
@@ -280,14 +341,14 @@ public class LinguaKWICGUI extends JFrame {
         // Row 5: Neighbor fields
         gbc.gridx = 0;
         gbc.gridy = 4;
-        optionsPanel.add(new JLabel("Right Neighbor:"), gbc);
+        optionsPanel.add(rn, gbc);
 
         gbc.gridx = 1;
         optionsPanel.add(neighborRightSpinner, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
-        optionsPanel.add(new JLabel("Left Neighbor:"), gbc);
+        optionsPanel.add(ln, gbc);
 
         gbc.gridx = 1;
         optionsPanel.add(neighborLeftSpinner, gbc);
@@ -311,6 +372,7 @@ public class LinguaKWICGUI extends JFrame {
 
         JScrollPane resultScrollPane = new JScrollPane(resultTextArea);
         resultScrollPane.setPreferredSize(new Dimension(800, 800)); // Adjust size
+        centerPanel.add(result,BorderLayout.NORTH);
         centerPanel.add(resultScrollPane, BorderLayout.CENTER);
 
         rootPanel.add(centerPanel, BorderLayout.CENTER);
@@ -363,7 +425,7 @@ public class LinguaKWICGUI extends JFrame {
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
             JLabel infoLabel = new JLabel("<html><p style='text-align:center;'>In Advanced search, you will provide us a topic in the language that you want and we will search in Wikipedia for your topic :)</p></html>");
-            infoLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            infoLabel.setFont(FONT.deriveFont(Font.BOLD));
             infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(infoLabel);
             contentPanel.add(Box.createVerticalStrut(20));
@@ -510,38 +572,38 @@ public class LinguaKWICGUI extends JFrame {
                 // Perform the search based on selected checkboxes
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
-                    History detail = new History(token + " " + lemma + " " + posTag,searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(token + " " + lemma + " " + posTag,searchField.getText(),NLPResults.size());
                     addHistory(detail);
                     addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
                     addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
-                    History detail = new History(token + " " + lemma, searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(token + " " + lemma, searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
                     addRecentEntry(token + " " + posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(token + " " + posTag,searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(token + " " + posTag,searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
                     addRecentEntry(lemma + " " + posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(lemma + " " + posTag, searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(lemma + " " + posTag, searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 } else if (exactWordCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
                     addRecentEntry(token + "(in " + searchField.getText() + ")");
-                    History detail = new History(token , searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(token , searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
                     addRecentEntry(lemma + "(in " + searchField.getText() + ")");
-                    History detail = new History(lemma, searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(lemma, searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
                     addRecentEntry(posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(posTag,searchField.getText(),NLPResults.size(),0);
+                    History detail = new History(posTag,searchField.getText(),NLPResults.size());
                     addHistory(detail);
                 }
 
@@ -564,6 +626,7 @@ public class LinguaKWICGUI extends JFrame {
 
 
             Highlighter highlighter = resultTextArea.getHighlighter();
+            Color highlighterColor = isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR;
             Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
 
             resultTextArea.append(results.size() + " match(es) found:\n");
@@ -656,7 +719,7 @@ public class LinguaKWICGUI extends JFrame {
             JPanel contentPanel = new JPanel();
             contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
             contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            
+
             JLabel infoLabel = new JLabel(selectedHistory.toString());
             infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(infoLabel);
@@ -714,49 +777,28 @@ public class LinguaKWICGUI extends JFrame {
         return historyList.get(index);
     }
 
-    private void setTheme() {
-        Color primaryColor = isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR;
-        Color secondaryColor = isDarkMode ? DARK_SECONDARY_COLOR : LIGHT_SECONDARY_COLOR;
-        Color textFieldBackground = isDarkMode ? DARK_TEXT_FIELD_BACKGROUND : LIGHT_TEXT_FIELD_BACKGROUND;
-        Color textAreaBackground = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
-        Color textAreaBgSecond = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
-        Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
 
-        // Apply colors to components
-        getContentPane().setBackground(primaryColor);
-        topPanel.setBackground(primaryColor);
-        leftPanel.setBackground(primaryColor);
-        bottomPanel.setBackground(primaryColor);
-        centerPanel.setBackground(primaryColor);
-        optionsPanel.setBackground(primaryColor);
-        recentPanel.setBackground(primaryColor);
-        rootPanel.setBackground(primaryColor);
-
-        searchField.setBackground(textFieldBackground);
-        browseFileButton.setBackground(buttonBackground);
-        advanceSearchButton.setBackground(buttonBackground);
-        exactWordCheckBox.setBackground(secondaryColor);
-        wordLemmaCheckBox.setBackground(secondaryColor);
-        wordPOSTagCheckBox.setBackground(secondaryColor);
-        caseSensitiveCheckBox.setBackground(secondaryColor);
-        exactWordField.setBackground(textFieldBackground);
-        wordLemmaField.setBackground(textFieldBackground);
-        wordPOSTagField.setBackground(textFieldBackground);
-        wholeSentenceRadioButton.setBackground(secondaryColor);
-        neighborRadioButton.setBackground(secondaryColor);
-        neighborRightSpinner.setBackground(secondaryColor);
-        neighborLeftSpinner.setBackground(secondaryColor);
-        themeToggleButton.setBackground(buttonBackground);
-        searchButton.setBackground(buttonBackground);
-        saveButton.setBackground(buttonBackground);
-
-        resultTextArea.setBackground(textAreaBackground);
-        recentList.setBackground(textAreaBgSecond);
-    }
 
 
 
     public static void main(String[] args) {
+        //this try part helps windows and linux user get the same result as mac users!
+        try {
+            // Set Nimbus look and feel
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // If Nimbus is not available, you can set the default cross-platform L&F
+            try {
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
         SwingUtilities.invokeLater(LinguaKWICGUI::new);
     }
 }
