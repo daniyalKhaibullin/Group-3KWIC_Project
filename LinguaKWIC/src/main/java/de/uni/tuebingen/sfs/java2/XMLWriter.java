@@ -29,11 +29,8 @@ import javax.xml.stream.events.XMLEvent;
  * 3. Call the writeXML method with the required parameters.
  *
  * Example:
- * List<LinguaKWIC> uploadedTexts = new ArrayList<>();
- * List<LinguaKWIC> webScrapedArticles = new ArrayList<>();
- * // Populate uploadedTexts and webScrapedArticles with appropriate data
  * XMLWriter.writeXML("001", "2024-07-19T12:00:00", "2024-07-19T13:00:00",
- *                    "JohnDoe", uploadedTexts, webScrapedArticles, "xml_outputs/output.xml");
+ *                    "JohnDoe", searchTerm, searchResults, "xml_outputs/output.xml");
  *
  *
  * Note:
@@ -43,8 +40,7 @@ import javax.xml.stream.events.XMLEvent;
 public class XMLWriter {
 
     public static void writeXML(String sessionId, String startTime, String endTime,
-                                String user, List<LinguaKWIC> uploadedTexts,
-                                List<LinguaKWIC> webScrapedArticles) {
+                                String user, String searchTerm, List<String> searchResults) {
         try {
             // Ensure the output directory exists
             File dir = new File("xml_outputs");
@@ -66,225 +62,66 @@ public class XMLWriter {
             eventWriter.add(eventFactory.createStartDocument("UTF-8", "1.0"));
             eventWriter.add(end);
 
-            StartElement kwicStartElement = eventFactory.createStartElement("", "", "KWICApplication");
-            eventWriter.add(kwicStartElement);
+            StartElement searchResultStartElement = eventFactory.createStartElement("", "", "searchresult");
+            eventWriter.add(searchResultStartElement);
             eventWriter.add(end);
 
-            StartElement sessionStartElement = eventFactory.createStartElement("", "", "Session");
+            StartElement fromStartElement = eventFactory.createStartElement("", "", "from");
             eventWriter.add(tab);
-            eventWriter.add(sessionStartElement);
+            eventWriter.add(fromStartElement);
+            eventWriter.add(eventFactory.createAttribute("url", "aUrl"));
+            eventWriter.add(eventFactory.createEndElement("", "", "from"));
             eventWriter.add(end);
 
-            createNode(eventWriter, "SessionID", sessionId, tab);
-            createNode(eventWriter, "StartTime", startTime, tab);
-            createNode(eventWriter, "EndTime", endTime, tab);
-            createNode(eventWriter, "User", user, tab);
-
-            StartElement uploadedTextsStartElement = eventFactory.createStartElement("", "", "UploadedTexts");
+            StartElement searchTermStartElement = eventFactory.createStartElement("", "", "searchTerm");
             eventWriter.add(tab);
-            eventWriter.add(uploadedTextsStartElement);
+            eventWriter.add(searchTermStartElement);
+            eventWriter.add(eventFactory.createAttribute("value", searchTerm));
+            eventWriter.add(eventFactory.createAttribute("type", "pos|lemma|word"));
+            eventWriter.add(eventFactory.createEndElement("", "", "searchTerm"));
             eventWriter.add(end);
 
-            for (LinguaKWIC textFile : uploadedTexts) {
-                StartElement textFileStartElement = eventFactory.createStartElement("", "", "TextFile");
+            StartElement resultsStartElement = eventFactory.createStartElement("", "", "results");
+            eventWriter.add(tab);
+            eventWriter.add(resultsStartElement);
+            eventWriter.add(end);
+
+            for (String result : searchResults) {
+                StartElement resultStartElement = eventFactory.createStartElement("", "", "result");
                 eventWriter.add(tab);
                 eventWriter.add(tab);
-                eventWriter.add(textFileStartElement);
+                eventWriter.add(resultStartElement);
                 eventWriter.add(end);
 
-                createNode(eventWriter, "FileName", textFile.getFileName().getName(), tab, tab);
-                createNode(eventWriter, "Content", textFile.getText(), tab, tab);
-
-                StartElement linguisticProcessingStartElement = eventFactory.createStartElement("", "", "LinguisticProcessing");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(linguisticProcessingStartElement);
-                eventWriter.add(end);
-
-                for (int i = 0; i < textFile.getSentences().size(); i++) {
-                    if (textFile.getTokens().get(i).size() != textFile.getPosTags().get(i).size() ||
-                            textFile.getTokens().get(i).size() != textFile.getLemmas().get(i).size()) {
-                        System.err.println("Mismatch in sizes of tokens, POS tags, and lemmas for sentence " + i);
-                        continue; // Skip this sentence
-                    }
-
-                    StartElement sentenceStartElement = eventFactory.createStartElement("", "", "Sentence");
+                // Assuming result string is formatted as "word,lemma,pos"
+                String[] parts = result.split(",");
+                if (parts.length == 3) {
+                    StartElement tStartElement = eventFactory.createStartElement("", "", "t");
                     eventWriter.add(tab);
                     eventWriter.add(tab);
                     eventWriter.add(tab);
-                    eventWriter.add(sentenceStartElement);
-                    eventWriter.add(end);
-
-                    createNode(eventWriter, "Text", textFile.getSentences().get(i), tab, tab, tab);
-
-                    StartElement wordsStartElement = eventFactory.createStartElement("", "", "Words");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(wordsStartElement);
-                    eventWriter.add(end);
-
-                    for (int j = 0; j < textFile.getTokens().get(i).size(); j++) {
-                        StartElement wordStartElement = eventFactory.createStartElement("", "", "Word");
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(wordStartElement);
-                        eventWriter.add(end);
-
-                        createNode(eventWriter, "Token", textFile.getTokens().get(i).get(j), tab, tab, tab, tab);
-                        createNode(eventWriter, "POS", textFile.getPosTags().get(i).get(j), tab, tab, tab, tab);
-                        createNode(eventWriter, "Lemma", textFile.getLemmas().get(i).get(j), tab, tab, tab, tab);
-
-                        EndElement wordEndElement = eventFactory.createEndElement("", "", "Word");
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(wordEndElement);
-                        eventWriter.add(end);
-                    }
-
-                    EndElement wordsEndElement = eventFactory.createEndElement("", "", "Words");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(wordsEndElement);
-                    eventWriter.add(end);
-
-                    EndElement sentenceEndElement = eventFactory.createEndElement("", "", "Sentence");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(sentenceEndElement);
+                    eventWriter.add(tStartElement);
+                    eventWriter.add(eventFactory.createAttribute("word", parts[0]));
+                    eventWriter.add(eventFactory.createAttribute("lemma", parts[1]));
+                    eventWriter.add(eventFactory.createAttribute("pos", parts[2]));
+                    eventWriter.add(eventFactory.createEndElement("", "", "t"));
                     eventWriter.add(end);
                 }
 
-                EndElement linguisticProcessingEndElement = eventFactory.createEndElement("", "", "LinguisticProcessing");
+                EndElement resultEndElement = eventFactory.createEndElement("", "", "result");
                 eventWriter.add(tab);
                 eventWriter.add(tab);
-                eventWriter.add(linguisticProcessingEndElement);
-                eventWriter.add(end);
-
-                EndElement textFileEndElement = eventFactory.createEndElement("", "", "TextFile");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(textFileEndElement);
+                eventWriter.add(resultEndElement);
                 eventWriter.add(end);
             }
 
-            EndElement uploadedTextsEndElement = eventFactory.createEndElement("", "", "UploadedTexts");
+            EndElement resultsEndElement = eventFactory.createEndElement("", "", "results");
             eventWriter.add(tab);
-            eventWriter.add(uploadedTextsEndElement);
+            eventWriter.add(resultsEndElement);
             eventWriter.add(end);
 
-            StartElement webScrapedContentStartElement = eventFactory.createStartElement("", "", "WebScrapedContent");
-            eventWriter.add(tab);
-            eventWriter.add(webScrapedContentStartElement);
-            eventWriter.add(end);
-
-            for (LinguaKWIC article : webScrapedArticles) {
-                StartElement articleStartElement = eventFactory.createStartElement("", "", "Article");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(articleStartElement);
-                eventWriter.add(end);
-
-                createNode(eventWriter, "URL", article.getUrl().toString(), tab, tab);
-                createNode(eventWriter, "Content", article.getText(), tab, tab);
-
-                StartElement linguisticProcessingStartElement = eventFactory.createStartElement("", "", "LinguisticProcessing");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(linguisticProcessingStartElement);
-                eventWriter.add(end);
-
-                for (int i = 0; i < article.getSentences().size(); i++) {
-                    if (article.getTokens().get(i).size() != article.getPosTags().get(i).size() ||
-                            article.getTokens().get(i).size() != article.getLemmas().get(i).size()) {
-                        System.err.println("Mismatch in sizes of tokens, POS tags, and lemmas for sentence " + i);
-                        continue; // Skip this sentence
-                    }
-
-                    StartElement sentenceStartElement = eventFactory.createStartElement("", "", "Sentence");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(sentenceStartElement);
-                    eventWriter.add(end);
-
-                    createNode(eventWriter, "Text", article.getSentences().get(i), tab, tab, tab);
-
-                    StartElement wordsStartElement = eventFactory.createStartElement("", "", "Words");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(wordsStartElement);
-                    eventWriter.add(end);
-
-                    for (int j = 0; j < article.getTokens().get(i).size(); j++) {
-                        StartElement wordStartElement = eventFactory.createStartElement("", "", "Word");
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(wordStartElement);
-                        eventWriter.add(end);
-
-                        createNode(eventWriter, "Token", article.getTokens().get(i).get(j), tab, tab, tab, tab);
-                        createNode(eventWriter, "POS", article.getPosTags().get(i).get(j), tab, tab, tab, tab);
-                        createNode(eventWriter, "Lemma", article.getLemmas().get(i).get(j), tab, tab, tab, tab);
-
-                        EndElement wordEndElement = eventFactory.createEndElement("", "", "Word");
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(tab);
-                        eventWriter.add(wordEndElement);
-                        eventWriter.add(end);
-                    }
-
-                    EndElement wordsEndElement = eventFactory.createEndElement("", "", "Words");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(wordsEndElement);
-                    eventWriter.add(end);
-
-                    EndElement sentenceEndElement = eventFactory.createEndElement("", "", "Sentence");
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(tab);
-                    eventWriter.add(sentenceEndElement);
-                    eventWriter.add(end);
-                }
-
-                EndElement linguisticProcessingEndElement = eventFactory.createEndElement("", "", "LinguisticProcessing");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(linguisticProcessingEndElement);
-                eventWriter.add(end);
-
-                EndElement articleEndElement = eventFactory.createEndElement("", "", "Article");
-                eventWriter.add(tab);
-                eventWriter.add(tab);
-                eventWriter.add(articleEndElement);
-                eventWriter.add(end);
-            }
-
-            EndElement webScrapedContentEndElement = eventFactory.createEndElement("", "", "WebScrapedContent");
-            eventWriter.add(tab);
-            eventWriter.add(webScrapedContentEndElement);
-            eventWriter.add(end);
-
-            EndElement sessionEndElement = eventFactory.createEndElement("", "", "Session");
-            eventWriter.add(tab);
-            eventWriter.add(sessionEndElement);
-            eventWriter.add(end);
-
-            EndElement kwicEndElement = eventFactory.createEndElement("", "", "KWICApplication");
-            eventWriter.add(kwicEndElement);
+            EndElement searchResultEndElement = eventFactory.createEndElement("", "", "searchresult");
+            eventWriter.add(searchResultEndElement);
             eventWriter.add(end);
 
             eventWriter.add(eventFactory.createEndDocument());
