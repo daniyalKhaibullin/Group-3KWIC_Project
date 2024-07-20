@@ -24,17 +24,18 @@ public class LinguaKWICGUI extends JFrame {
 
     // Define colors and fonts
 
-    private static final Color LIGHT_PRIMARY_COLOR = new Color(179, 159, 230); // A lighter purple
+    private static final Color LIGHT_PRIMARY_COLOR = new Color(195, 202, 198); // A lighter gray
     private static final Color LIGHT_SECONDARY_COLOR = new Color(127, 160, 130); // Softer green
     private static final Color LIGHT_TEXT_FIELD_BACKGROUND = new Color(255, 255, 255); // White
-    private static final Color LIGHT_TEXT_AREA_BACKGROUND = new Color(245, 245, 245); // Light gray
-    private static final Color LIGHT_BUTTON_BACKGROUND = new Color(200, 200, 255); // Light purple
-    private static final Color LIGHT_FONT_COLOR = new Color(40, 40, 40); // Dark gray
+    private static final Color LIGHT_TEXT_AREA_BACKGROUND = new Color(255, 255, 255); // Light gray
+    private static final Color LIGHT_BUTTON_BACKGROUND = new Color(109, 109, 126); // Light purple
+    private static final Color LIGHT_FONT_COLOR = new Color(105,8,19);
+    private static final Color LIGHT_TEXT_FONT_COLOR = new Color(37, 37, 37);// Dark gray
     private static final Color LIGHT_HIGHLIGHTER = new Color(255, 255, 153);
 
 
     // Define colors and fonts for dark mode
-    private static final Color DARK_PRIMARY_COLOR = new Color(102, 102, 153); // Darker purple
+    private static final Color DARK_PRIMARY_COLOR = new Color(64, 60, 71); // Darker purple
     private static final Color DARK_SECONDARY_COLOR = new Color(56, 78, 58); // Darker green
     private static final Color DARK_TEXT_FIELD_BACKGROUND = new Color(40, 40, 40); // Dark gray
     private static final Color DARK_TEXT_AREA_BACKGROUND = new Color(60, 60, 60); // Medium dark gray
@@ -42,8 +43,8 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color DARK_FONT_COLOR = new Color(220, 220, 220); // Light gray
     private static final Color DARK_HIGHLIGHTER = new Color(40, 40, 40);
 
-    private static final Font FONT = new Font("Phosphate", Font.PLAIN, 15);
-    private static final Font INPUT_FONT = new Font("Papyrus", Font.BOLD, 15);
+    private static final Font FONT = new Font("Rockwell", Font.BOLD, 15);
+    private static final Font INPUT_FONT = new Font("Rockwell", Font.PLAIN, 15);
 
     private static Color highlighterColor;
 
@@ -200,6 +201,7 @@ public class LinguaKWICGUI extends JFrame {
         Color textAreaBackground = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
         Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
         Color fontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_FONT_COLOR;
+        Color textfontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_TEXT_FONT_COLOR;
         highlighterColor = isDarkMode ? DARK_HIGHLIGHTER : LIGHT_HIGHLIGHTER;
 
 
