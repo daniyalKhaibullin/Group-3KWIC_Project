@@ -16,10 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Queue;
 import java.util.stream.Collectors;
 
 public class LinguaKWICGUI extends JFrame {
@@ -32,6 +30,7 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color LIGHT_TEXT_AREA_BACKGROUND = new Color(245, 245, 245); // Light gray
     private static final Color LIGHT_BUTTON_BACKGROUND = new Color(200, 200, 255); // Light purple
     private static final Color LIGHT_FONT_COLOR = new Color(40, 40, 40); // Dark gray
+    private static final Color LIGHT_HIGHLIGHTER = new Color(255, 255, 153);
 
 
     // Define colors and fonts for dark mode
@@ -41,9 +40,12 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color DARK_TEXT_AREA_BACKGROUND = new Color(60, 60, 60); // Medium dark gray
     private static final Color DARK_BUTTON_BACKGROUND = new Color(80, 80, 120); // Dark purple
     private static final Color DARK_FONT_COLOR = new Color(220, 220, 220); // Light gray
+    private static final Color DARK_HIGHLIGHTER = new Color(40, 40, 40);
 
     private static final Font FONT = new Font("Phosphate", Font.PLAIN, 15);
     private static final Font INPUT_FONT = new Font("Papyrus", Font.BOLD, 15);
+
+    private static Color highlighterColor;
 
     private static final int MAX_RECENT_ENTRIES = 25;
 
@@ -198,6 +200,8 @@ public class LinguaKWICGUI extends JFrame {
         Color textAreaBackground = isDarkMode ? DARK_TEXT_AREA_BACKGROUND : LIGHT_TEXT_AREA_BACKGROUND;
         Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
         Color fontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_FONT_COLOR;
+        highlighterColor = isDarkMode ? DARK_HIGHLIGHTER : LIGHT_HIGHLIGHTER;
+
 
         // Apply colors to panels
         getContentPane().setBackground(primaryColor);
@@ -272,6 +276,7 @@ public class LinguaKWICGUI extends JFrame {
 
         result.setForeground(fontColor);
         result.setFont(FONT);
+
     }
 
 
@@ -372,7 +377,7 @@ public class LinguaKWICGUI extends JFrame {
 
         JScrollPane resultScrollPane = new JScrollPane(resultTextArea);
         resultScrollPane.setPreferredSize(new Dimension(800, 800)); // Adjust size
-        centerPanel.add(result,BorderLayout.NORTH);
+        centerPanel.add(result, BorderLayout.NORTH);
         centerPanel.add(resultScrollPane, BorderLayout.CENTER);
 
         rootPanel.add(centerPanel, BorderLayout.CENTER);
@@ -572,38 +577,38 @@ public class LinguaKWICGUI extends JFrame {
                 // Perform the search based on selected checkboxes
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
-                    History detail = new History(token + " " + lemma + " " + posTag,searchField.getText(),NLPResults.size());
+                    History detail = new History(token + " " + lemma + " " + posTag, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                     addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
                     addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
-                    History detail = new History(token + " " + lemma, searchField.getText(),NLPResults.size());
+                    History detail = new History(token + " " + lemma, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
                     addRecentEntry(token + " " + posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(token + " " + posTag,searchField.getText(),NLPResults.size());
+                    History detail = new History(token + " " + posTag, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
                     addRecentEntry(lemma + " " + posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(lemma + " " + posTag, searchField.getText(),NLPResults.size());
+                    History detail = new History(lemma + " " + posTag, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 } else if (exactWordCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
                     addRecentEntry(token + "(in " + searchField.getText() + ")");
-                    History detail = new History(token , searchField.getText(),NLPResults.size());
+                    History detail = new History(token, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
                     addRecentEntry(lemma + "(in " + searchField.getText() + ")");
-                    History detail = new History(lemma, searchField.getText(),NLPResults.size());
+                    History detail = new History(lemma, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
                     addRecentEntry(posTag + "(in " + searchField.getText() + ")");
-                    History detail = new History(posTag,searchField.getText(),NLPResults.size());
+                    History detail = new History(posTag, searchField.getText(), NLPResults.size());
                     addHistory(detail);
                 }
 
@@ -626,8 +631,7 @@ public class LinguaKWICGUI extends JFrame {
 
 
             Highlighter highlighter = resultTextArea.getHighlighter();
-            Color highlighterColor = isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR;
-            Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+            Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
 
             resultTextArea.append(results.size() + " match(es) found:\n");
 
@@ -662,6 +666,7 @@ public class LinguaKWICGUI extends JFrame {
                         sentenceText.append(tokens.get(sentenceIndex).get(i)).append(" ");
                         lemmaText.append(lemmas.get(sentenceIndex).get(i)).append(" ");
                         posTagText.append(posTags.get(sentenceIndex).get(i)).append(" ");
+
                     }
                     sentenceText.append("\n");
                     lemmaText.append("\n");
@@ -679,6 +684,7 @@ public class LinguaKWICGUI extends JFrame {
 
                     resultTextArea.setCaretPosition(0);
                     try {
+
                         // Highlight the word in the sentence
                         int wordStart = sentenceStartPos + sentenceText.indexOf(token);
                         int wordEnd = wordStart + token.length();
@@ -707,7 +713,7 @@ public class LinguaKWICGUI extends JFrame {
         int index = recentList.locationToIndex(evt.getPoint());
 
         if (index >= 0) {
-            History selectedHistory = getHistoryByIndex(recentListModel.size()-(index+1));
+            History selectedHistory = getHistoryByIndex(recentListModel.size() - (index + 1));
 
             // Create a new JDialog
             JDialog advancedDialog = new JDialog(this, "Search History", true);
@@ -776,9 +782,6 @@ public class LinguaKWICGUI extends JFrame {
         List<History> historyList = new ArrayList<>(recentHistory);
         return historyList.get(index);
     }
-
-
-
 
 
     public static void main(String[] args) {
