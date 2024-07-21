@@ -557,7 +557,7 @@ public class LinguaKWICGUI extends JFrame {
                 // Call the writeXML method and handle exceptions
                 try {
                     XMLWriter writer = new XMLWriter();
-                    writer.writeXML(filePath, record.getResults(), record.getTokens(), record.getLemmas(), record.getPosTags());
+                    writer.writeXML(filePath, record.getResults(), record.getTokens(), record.getLemmas(), record.getPosTags(), record.getTarget(), record.getSearchString(), record.getType());
                     JOptionPane.showMessageDialog(null, "File saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 } catch (XMLStreamException | IOException ex) {
                     JOptionPane.showMessageDialog(null, "Error saving file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -608,44 +608,44 @@ public class LinguaKWICGUI extends JFrame {
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
                     History detail = new History(token + " " + lemma + " " + posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(), token + ", " + lemma + ", " + posTag, "word, pos, lemma");
                     addHistory(detail, record);
                     addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
                     addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(token + " " + lemma, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  token + ", " + lemma, "word, lemma");
                     addHistory(detail, record);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
                     addRecentEntry(token + " " + posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(token + " " + posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), token + ", " + posTag, "word, pos");
                     addHistory(detail, record);
                 } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
                     addRecentEntry(lemma + " " + posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(lemma + " " + posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), lemma + ", " + posTag, "lemma, posTag");
                     addHistory(detail, record);
                 } else if (exactWordCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
                     addRecentEntry(token + "(in " + searchField.getText() + ")");
                     History detail = new History(token, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  token, "word");
                     addHistory(detail, record);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
                     addRecentEntry(lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(lemma, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  lemma, "lemma");
                     addHistory(detail, record);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
                     addRecentEntry(posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  posTag, "pos");
                     addHistory(detail, record);
                 }
 
