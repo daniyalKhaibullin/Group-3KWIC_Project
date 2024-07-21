@@ -7,6 +7,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,33 +19,30 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.regex.*;
 
 public class LinguaKWICGUI extends JFrame {
 
     // Define colors and fonts
-
     private static final Color LIGHT_PRIMARY_COLOR = new Color(195, 202, 198); // A lighter gray
-    private static final Color LIGHT_SECONDARY_COLOR = new Color(127, 160, 130); // Softer green
+    private static final Color LIGHT_HIGHLIGHTER_COLOR = new Color(127, 160, 130); // Softer green
     private static final Color LIGHT_TEXT_FIELD_BACKGROUND = new Color(255, 255, 255); // White
     private static final Color LIGHT_TEXT_AREA_BACKGROUND = new Color(255, 255, 255); // Light gray
     private static final Color LIGHT_BUTTON_BACKGROUND = new Color(109, 109, 126); // Light purple
-    private static final Color LIGHT_FONT_COLOR = new Color(105,8,19);
+    private static final Color LIGHT_FONT_COLOR = new Color(105, 8, 19);
     private static final Color LIGHT_TEXT_FONT_COLOR = new Color(37, 37, 37);// Dark gray
-    private static final Color LIGHT_HIGHLIGHTER = new Color(255, 255, 153);
-
 
     // Define colors and fonts for dark mode
     private static final Color DARK_PRIMARY_COLOR = new Color(64, 60, 71); // Darker purple
-    private static final Color DARK_SECONDARY_COLOR = new Color(56, 78, 58); // Darker green
+    private static final Color DARK_HIGHLIGHTER_COLOR = new Color(56, 78, 58); // Darker green
     private static final Color DARK_TEXT_FIELD_BACKGROUND = new Color(40, 40, 40); // Dark gray
     private static final Color DARK_TEXT_AREA_BACKGROUND = new Color(60, 60, 60); // Medium dark gray
     private static final Color DARK_BUTTON_BACKGROUND = new Color(80, 80, 120); // Dark purple
     private static final Color DARK_FONT_COLOR = new Color(220, 220, 220); // Light gray
-    private static final Color DARK_HIGHLIGHTER = new Color(40, 40, 40);
-
-    private static final Font FONT = new Font("Phosphate", Font.BOLD, 18);
+    //Define Fonts
+    private static final Font FONT = new Font("Phosphate", Font.BOLD, 16);
     private static final Font INPUT_FONT = new Font("Rockwell", Font.PLAIN, 15);
+    private static final Font BUTTON_FONT   = new Font("Rockwell", Font.BOLD, 15);
 
     private static Color highlighterColor;
 
@@ -89,6 +87,7 @@ public class LinguaKWICGUI extends JFrame {
     public JPanel optionsPanel = new JPanel(new GridBagLayout());
     public JPanel centerPanel = new JPanel(new BorderLayout());
     public JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    public JPanel leftPanelForTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
 
     // Theme toggle button
     private JButton themeToggleButton;
@@ -202,12 +201,13 @@ public class LinguaKWICGUI extends JFrame {
         Color buttonBackground = isDarkMode ? DARK_BUTTON_BACKGROUND : LIGHT_BUTTON_BACKGROUND;
         Color fontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_FONT_COLOR;
         Color textfontColor = isDarkMode ? DARK_FONT_COLOR : LIGHT_TEXT_FONT_COLOR;
-        highlighterColor = isDarkMode ? DARK_HIGHLIGHTER : LIGHT_HIGHLIGHTER;
+        highlighterColor = isDarkMode ? DARK_HIGHLIGHTER_COLOR : LIGHT_HIGHLIGHTER_COLOR;
 
 
         // Apply colors to panels
         getContentPane().setBackground(primaryColor);
         topPanel.setBackground(primaryColor);
+        leftPanelForTop.setBackground(primaryColor);
         leftPanel.setBackground(primaryColor);
         bottomPanel.setBackground(primaryColor);
         centerPanel.setBackground(primaryColor);
@@ -220,8 +220,10 @@ public class LinguaKWICGUI extends JFrame {
         searchField.setForeground(fontColor);
         browseFileButton.setBackground(buttonBackground);
         browseFileButton.setForeground(fontColor);
+        browseFileButton.setFont(BUTTON_FONT);
         advanceSearchButton.setBackground(buttonBackground);
         advanceSearchButton.setForeground(fontColor);
+        advanceSearchButton.setFont(BUTTON_FONT);
         exactWordCheckBox.setForeground(fontColor);
         wordLemmaCheckBox.setForeground(fontColor);
         wordPOSTagCheckBox.setForeground(fontColor);
@@ -238,10 +240,13 @@ public class LinguaKWICGUI extends JFrame {
         neighborLeftSpinner.setForeground(fontColor);
         themeToggleButton.setBackground(buttonBackground);
         themeToggleButton.setForeground(fontColor);
+        themeToggleButton.setFont(BUTTON_FONT);
         searchButton.setBackground(buttonBackground);
         searchButton.setForeground(fontColor);
+        searchButton.setFont(BUTTON_FONT);
         saveButton.setBackground(buttonBackground);
         saveButton.setForeground(fontColor);
+        saveButton.setFont(BUTTON_FONT);
 
         // Apply colors and fonts to text area and list
         resultTextArea.setBackground(textAreaBackground);
@@ -292,12 +297,21 @@ public class LinguaKWICGUI extends JFrame {
         setContentPane(rootPanel);
 
         // Top Panel (North)
+        topPanel.setLayout(new BorderLayout());  // Change layout manager to BorderLayout
         topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        topPanel.add(target);
-        topPanel.add(searchField);
-        topPanel.add(browseFileButton);
-        topPanel.add(advanceSearchButton);
+
+        // Create a panel to hold left-aligned components
+        leftPanelForTop.add(target);
+        leftPanelForTop.add(searchField);
+        leftPanelForTop.add(browseFileButton);
+        leftPanelForTop.add(advanceSearchButton);
+
+        // Add the left-aligned panel to the CENTER of the topPanel
+        topPanel.add(leftPanelForTop, BorderLayout.CENTER);
+
+        // Add the themeToggleButton to the EAST of the topPanel
         topPanel.add(themeToggleButton, BorderLayout.EAST);
+
         rootPanel.add(topPanel, BorderLayout.NORTH);
         recentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         recentPanel.add(recent, BorderLayout.NORTH);
@@ -618,41 +632,45 @@ public class LinguaKWICGUI extends JFrame {
                 // Display search results in the GUI
                 displaySearchResults(NLPResults, tokens, lemmas, posTags);
             } catch (Exception ex) {
-//                ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, "Error loading data: this URL is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
 
         private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
-                                          List<List<String>> lemmas, List<List<String>> posTags) {
+                                          List<List<String>> lemmas, List<List<String>> posTags) throws Exception {
             if (results == null || results.isEmpty()) {
                 resultTextArea.append("No results found.");
                 return;
             }
 
-
             Highlighter highlighter = resultTextArea.getHighlighter();
             Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
 
-            resultTextArea.append(results.size() + " match(es) found:\n");
+            String matchInfo = results.size() + " match(es) found:\n\n";
+            resultTextArea.append(matchInfo);
 
+            if (neighborRadioButton.isSelected()) {
+                highlightWithNeighbors(results, tokens, lemmas, posTags, highlighter, painter);
+            } else {
+                highlightWithoutNeighbors(results, tokens, lemmas, posTags, highlighter, painter);
+            }
 
+            resultTextArea.setCaretPosition(0);
+        }
+
+        private void highlightWithNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                            List<List<String>> lemmas, List<List<String>> posTags,
+                                            Highlighter highlighter, Highlighter.HighlightPainter painter) throws BadLocationException {
             for (TextSearch.Pair result : results) {
                 int sentenceIndex = result.getSentenceIndex();
                 int tokenIndex = result.getTokenIndex();
-                int start = 0;
-                int end = tokens.get(sentenceIndex).size();
-                int leftN;
-                int rightN;
-
-                if (neighborRadioButton.isSelected()) {
-                    leftN = (int) neighborLeftSpinner.getValue();
-                    rightN = (int) neighborRightSpinner.getValue();
-                    start = Math.max(0, tokenIndex - rightN);
-                    end = Math.min(tokens.get(sentenceIndex).size(), tokenIndex + leftN + 1);
-                }
-
+                int start;
+                int end;
+                int leftN = (int) neighborLeftSpinner.getValue();
+                int rightN = (int) neighborRightSpinner.getValue();
+                start = Math.max(0, tokenIndex - rightN);
+                end = Math.min(tokens.get(sentenceIndex).size(), tokenIndex + leftN + 1);
 
                 if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
                     String token = tokens.get(sentenceIndex).get(tokenIndex);
@@ -663,9 +681,8 @@ public class LinguaKWICGUI extends JFrame {
                     StringBuilder lemmaText = new StringBuilder("Lemmas: ");
                     StringBuilder posTagText = new StringBuilder("POS Tags: ");
 
-
                     for (int i = start; i < end; i++) {
-                        if(i== tokenIndex){
+                        if (i == tokenIndex) {
                             sentenceText.append("[[");
                             lemmaText.append("[[");
                             posTagText.append("[[");
@@ -673,50 +690,100 @@ public class LinguaKWICGUI extends JFrame {
                         sentenceText.append(tokens.get(sentenceIndex).get(i)).append(" ");
                         lemmaText.append(lemmas.get(sentenceIndex).get(i)).append(" ");
                         posTagText.append(posTags.get(sentenceIndex).get(i)).append(" ");
-                        if(i== tokenIndex){
+                        if (i == tokenIndex) {
                             sentenceText.append("]]");
                             lemmaText.append("]]");
                             posTagText.append("]]");
                         }
-
                     }
                     sentenceText.append("\n");
                     lemmaText.append("\n");
                     posTagText.append("\n\n");
-
-                    // Append the texts
-                    int sentenceStartPos = resultTextArea.getText().length();
                     resultTextArea.append(sentenceText.toString());
-
-                    int lemmaStartPos = resultTextArea.getText().length();
                     resultTextArea.append(lemmaText.toString());
-
-                    int posTagStartPos = resultTextArea.getText().length();
                     resultTextArea.append(posTagText.toString());
 
-                    resultTextArea.setCaretPosition(0);
-                    try {
-
-                        // Highlight the word in the sentence
-                        int wordStart = sentenceStartPos + sentenceText.indexOf(token);
-                        int wordEnd = wordStart + token.length();
-                        highlighter.addHighlight(wordStart, wordEnd, painter);
-
-                        // Highlight the corresponding lemma
-                        int lemmaStart = lemmaStartPos + lemmaText.indexOf(lemma);
-                        int lemmaEnd = lemmaStart + lemma.length();
-                        highlighter.addHighlight(lemmaStart, lemmaEnd, painter);
-
-                        // Highlight the corresponding POS tag
-                        int posTagStart = posTagStartPos + posTagText.indexOf(posTag);
-                        int posTagEnd = posTagStart + posTag.length();
-                        highlighter.addHighlight(posTagStart, posTagEnd, painter);
-                    } catch (BadLocationException e) {
-                        JOptionPane.showMessageDialog(null, "Sorry, there was an issue displaying the search results \n due to a problem with the text position.", "Error", JOptionPane.ERROR_MESSAGE);
-
-                    }
+                    highlightWords(resultTextArea);
                 }
             }
+        }
+
+        private void highlightWithoutNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                               List<List<String>> lemmas, List<List<String>> posTags,
+                                               Highlighter highlighter, Highlighter.HighlightPainter painter) throws Exception {
+            // Sort results by sentence index and then by token index
+            results.sort(Comparator.comparingInt(TextSearch.Pair::getSentenceIndex)
+                    .thenComparingInt(TextSearch.Pair::getTokenIndex));
+
+            // Group results by sentence index
+            Map<Integer, List<Integer>> sentenceToTokensMap = new LinkedHashMap<>();
+            for (TextSearch.Pair result : results) {
+                sentenceToTokensMap.computeIfAbsent(result.getSentenceIndex(), k -> new ArrayList<>()).add(result.getTokenIndex());
+            }
+
+            // Process each sentence with matches
+            for (Map.Entry<Integer, List<Integer>> entry : sentenceToTokensMap.entrySet()) {
+                int sentenceIndex = entry.getKey();
+                List<Integer> tokenIndices = entry.getValue();
+
+                if (sentenceIndex < tokens.size()) {
+                    StringBuilder sentenceText = new StringBuilder("Sentence " + (sentenceIndex + 1) + ": ");
+                    StringBuilder lemmaText = new StringBuilder("Lemmas: ");
+                    StringBuilder posTagText = new StringBuilder("POS Tags: ");
+
+                    for (int i = 0; i < tokens.get(sentenceIndex).size(); i++) {
+                        if (tokenIndices.contains(i)) {
+                            sentenceText.append("[[");
+                            lemmaText.append("[[");
+                            posTagText.append("[[");
+                        }
+
+                        sentenceText.append(tokens.get(sentenceIndex).get(i)).append(" ");
+                        lemmaText.append(lemmas.get(sentenceIndex).get(i)).append(" ");
+                        posTagText.append(posTags.get(sentenceIndex).get(i)).append(" ");
+
+                        if (tokenIndices.contains(i)) {
+                            sentenceText.append("]]");
+                            lemmaText.append("]]");
+                            posTagText.append("]]");
+                        }
+                    }
+
+                    sentenceText.append("\n");
+                    lemmaText.append("\n");
+                    posTagText.append("\n\n");
+
+
+                    resultTextArea.append(sentenceText.toString());
+                    resultTextArea.append(lemmaText.toString());
+                    resultTextArea.append(posTagText.toString());
+
+                    highlightWords(resultTextArea);
+
+                }
+            }
+        }
+        private static void highlightWords(JTextArea textArea) throws BadLocationException {
+                // Get original content
+                String content = textArea.getText();
+
+                // Pattern to match [[text]]
+                Pattern pattern = Pattern.compile("\\[\\[(.*?)\\]\\]");
+                Matcher matcher = pattern.matcher(content);
+
+                // Highlighter setup
+                Highlighter highlighter = textArea.getHighlighter();
+                Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
+
+                // To avoid text manipulation, we will directly highlight matching segments
+                while (matcher.find()) {
+                    // Highlight the text between [[ and ]]
+                    int start = matcher.start(1);
+                    int end = matcher.end(1);
+
+                    // Use the original content's offsets
+                    highlighter.addHighlight(start, end, painter);
+                }
         }
 
     }
