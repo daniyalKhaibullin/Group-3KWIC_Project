@@ -1,25 +1,24 @@
 package de.uni.tuebingen.sfs.java2;
 
-import lombok.Setter;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.regex.*;
+import javax.xml.stream.XMLStreamException;
 
 public class LinguaKWICGUI extends JFrame {
 
@@ -42,11 +41,11 @@ public class LinguaKWICGUI extends JFrame {
     //Define Fonts
     private static final Font FONT = new Font("Phosphate", Font.BOLD, 16);
     private static final Font INPUT_FONT = new Font("Rockwell", Font.PLAIN, 15);
-    private static final Font BUTTON_FONT   = new Font("Rockwell", Font.BOLD, 15);
+    private static final Font BUTTON_FONT = new Font("Rockwell", Font.BOLD, 15);
 
     private static Color highlighterColor;
 
-    private static final int MAX_RECENT_ENTRIES = 25;
+    private static final int MAX_RECENT_ENTRIES = 15;
 
     // Components
     static RoundedTextField searchField;
@@ -78,6 +77,7 @@ public class LinguaKWICGUI extends JFrame {
     static JList<String> recentList;
 
     private static Queue<History> recentHistory = new ArrayDeque<>();
+    private static Queue<RecordKeeper> recordKeeper = new ArrayDeque<>();
 
     //Panels
     public JPanel rootPanel = new JPanel(new BorderLayout());
@@ -99,6 +99,10 @@ public class LinguaKWICGUI extends JFrame {
     public JLabel rn = new JLabel("Right Neighbor:");
     public JLabel ln = new JLabel("Left Neighbor:");
     public JLabel result = new JLabel("Result:");
+
+    ///
+    private static int indexOfRecord;
+
 
     public LinguaKWICGUI() {
         initializeComponents();
@@ -427,7 +431,7 @@ public class LinguaKWICGUI extends JFrame {
                     selectedFile = fileChooser.getSelectedFile();
                     searchField.setText(selectedFile.getName());
                 }
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, "Error loading target: this file is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
 
             }
@@ -492,7 +496,7 @@ public class LinguaKWICGUI extends JFrame {
                         lang = "de";
                     }
                     String url = "https://" + lang + ".wikipedia.org/wiki/" + searchTopic.replace(" ", "_");
-                    if(!isValidURL(url)){
+                    if (!isValidURL(url)) {
                         JOptionPane.showMessageDialog(null, "Error performing advanced search: couldn't find the topic", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                     searchField.setText(url);
@@ -509,11 +513,15 @@ public class LinguaKWICGUI extends JFrame {
                 formPanel.setBackground(DARK_PRIMARY_COLOR);
                 advancedDialog.setBackground(DARK_PRIMARY_COLOR);
                 okButton.setBackground(DARK_BUTTON_BACKGROUND);
+                okButton.setForeground(DARK_FONT_COLOR);
+                okButton.setFont(BUTTON_FONT);
             } else {
                 contentPanel.setBackground(LIGHT_PRIMARY_COLOR);
                 formPanel.setBackground(LIGHT_PRIMARY_COLOR);
                 advancedDialog.setBackground(LIGHT_PRIMARY_COLOR);
                 okButton.setBackground(LIGHT_BUTTON_BACKGROUND);
+                okButton.setForeground(LIGHT_FONT_COLOR);
+                okButton.setFont(BUTTON_FONT);
             }
             advancedDialog.setVisible(true);
         }
@@ -522,40 +530,38 @@ public class LinguaKWICGUI extends JFrame {
     private static class SaveButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-//                java.util.List<UploadedFile> uploadedFiles = new ArrayList<>();
-//                java.util.List<ProcessedFile> processedFiles = new ArrayList<>();
-//                java.util.List<WikipediaArticle> articles = new ArrayList<>();
-//
-//                if (selectedFile.exists()) {
-//                    uploadedFiles.add(new UploadedFile(selectedFile.getName(), linguaKWIC.getText()));
-//                    processedFiles.add(new ProcessedFile(selectedFile.getName(), linguaKWIC.getTokens().stream()
-//                            .flatMap(java.util.List::stream)
-//                            .collect(Collectors.toList()), linguaKWIC.getLemmas().stream()
-//                            .flatMap(java.util.List::stream)
-//                            .collect(Collectors.toList()), linguaKWIC.getPosTags().stream()
-//                            .flatMap(List::stream)
-//                            .collect(Collectors.toList())));
-//                }
-//                if (isValidURL(searchField.getText())) {
-//                    articles.add(new WikipediaArticle(searchField.getText(), linguaKWIC.getText()));
-//                }
-//
-//                JFileChooser fileChooser = new JFileChooser();
-//                fileChooser.setDialogTitle("Specify a file to save");
-//                FileNameExtensionFilter filter = new FileNameExtensionFilter("XML Files", "xml");
-//                fileChooser.setFileFilter(filter);
-//                fileChooser.setAcceptAllFileFilterUsed(false);
-//
-//                int userSelection = fileChooser.showSaveDialog(null);
-//                if (userSelection == JFileChooser.APPROVE_OPTION) {
-//                    File fileToSave = fileChooser.getSelectedFile();
-//                    XMLWriter xmlWriter = new XMLWriter();
-//                    xmlWriter.writeXML(fileToSave.getAbsolutePath(), uploadedFiles, processedFiles, articles);
-//                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error saving file: Something went wrong ", "Error", JOptionPane.ERROR_MESSAGE);
+            List<RecordKeeper> records = new ArrayList<>(recordKeeper);
+            RecordKeeper record = records.get(indexOfRecord);
+
+            // Create a file chooser
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save as XML");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            // Add a file filter to only show XML files
+            FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XML files", "xml");
+            fileChooser.setFileFilter(xmlFilter);
+
+            // Show save dialog and get user selection
+            int userSelection = fileChooser.showSaveDialog(null);
+
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                String filePath = fileToSave.getAbsolutePath();
+
+                // Ensure the file has a .xml extension
+                if (!filePath.toLowerCase().endsWith(".xml")) {
+                    filePath += ".xml";
+                }
+
+                // Call the writeXML method and handle exceptions
+                try {
+                    XMLWriter writer = new XMLWriter();
+                    writer.writeXML(filePath, record.getResults(), record.getTokens(), record.getLemmas(), record.getPosTags());
+                    JOptionPane.showMessageDialog(null, "File saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (XMLStreamException | IOException ex) {
+                    JOptionPane.showMessageDialog(null, "Error saving file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
@@ -602,51 +608,59 @@ public class LinguaKWICGUI extends JFrame {
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
                     History detail = new History(token + " " + lemma + " " + posTag, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                     addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
                     addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(token + " " + lemma, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
                     addRecentEntry(token + " " + posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(token + " " + posTag, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 } else if (wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTagAndLemm(posTag, lemma, caseSensitive);
                     addRecentEntry(lemma + " " + posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(lemma + " " + posTag, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 } else if (exactWordCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
                     addRecentEntry(token + "(in " + searchField.getText() + ")");
                     History detail = new History(token, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
                     addRecentEntry(lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(lemma, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
                     addRecentEntry(posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(posTag, searchField.getText(), NLPResults.size());
-                    addHistory(detail);
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags);
+                    addHistory(detail, record);
                 }
 
 
                 // Display search results in the GUI
                 displaySearchResults(NLPResults, tokens, lemmas, posTags);
+                indexOfRecord = recentHistory.size() - 1;
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, "Error loading data: this URL is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
 
 
-        private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
-                                          List<List<String>> lemmas, List<List<String>> posTags) throws Exception {
+        private static void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                                 List<List<String>> lemmas, List<List<String>> posTags) throws Exception {
             if (results == null || results.isEmpty()) {
                 resultTextArea.append("No results found.");
                 return;
@@ -655,6 +669,7 @@ public class LinguaKWICGUI extends JFrame {
             Highlighter highlighter = resultTextArea.getHighlighter();
             Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
 
+            resultTextArea.setText("");
             String matchInfo = results.size() + " match(es) found:\n\n";
             resultTextArea.append(matchInfo);
 
@@ -667,9 +682,9 @@ public class LinguaKWICGUI extends JFrame {
             resultTextArea.setCaretPosition(0);
         }
 
-        private void highlightWithNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
-                                            List<List<String>> lemmas, List<List<String>> posTags,
-                                            Highlighter highlighter, Highlighter.HighlightPainter painter) throws BadLocationException {
+        private static void highlightWithNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                                   List<List<String>> lemmas, List<List<String>> posTags,
+                                                   Highlighter highlighter, Highlighter.HighlightPainter painter) throws BadLocationException {
             for (TextSearch.Pair result : results) {
                 int sentenceIndex = result.getSentenceIndex();
                 int tokenIndex = result.getTokenIndex();
@@ -716,9 +731,9 @@ public class LinguaKWICGUI extends JFrame {
             }
         }
 
-        private void highlightWithoutNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
-                                               List<List<String>> lemmas, List<List<String>> posTags,
-                                               Highlighter highlighter, Highlighter.HighlightPainter painter) throws Exception {
+        private static void highlightWithoutNeighbors(List<TextSearch.Pair> results, List<List<String>> tokens,
+                                                      List<List<String>> lemmas, List<List<String>> posTags,
+                                                      Highlighter highlighter, Highlighter.HighlightPainter painter) throws Exception {
             // Sort results by sentence index and then by token index
             results.sort(Comparator.comparingInt(TextSearch.Pair::getSentenceIndex)
                     .thenComparingInt(TextSearch.Pair::getTokenIndex));
@@ -771,76 +786,93 @@ public class LinguaKWICGUI extends JFrame {
                 }
             }
         }
+
         private static void highlightWords(JTextArea textArea) throws BadLocationException {
-                // Get original content
-                String content = textArea.getText();
+            // Get original content
+            String content = textArea.getText();
 
-                // Pattern to match [[text]]
-                Pattern pattern = Pattern.compile("\\[\\[(.*?)\\]\\]");
-                Matcher matcher = pattern.matcher(content);
+            // Pattern to match [[text]]
+            Pattern pattern = Pattern.compile("\\[\\[(.*?)\\]\\]");
+            Matcher matcher = pattern.matcher(content);
 
-                // Highlighter setup
-                Highlighter highlighter = textArea.getHighlighter();
-                Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
+            // Highlighter setup
+            Highlighter highlighter = textArea.getHighlighter();
+            Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
 
-                // To avoid text manipulation, we will directly highlight matching segments
-                while (matcher.find()) {
-                    // Highlight the text between [[ and ]]
-                    int start = matcher.start(1);
-                    int end = matcher.end(1);
+            // To avoid text manipulation, we will directly highlight matching segments
+            while (matcher.find()) {
+                // Highlight the text between [[ and ]]
+                int start = matcher.start(1);
+                int end = matcher.end(1);
 
-                    // Use the original content's offsets
-                    highlighter.addHighlight(start, end, painter);
-                }
+                // Use the original content's offsets
+                highlighter.addHighlight(start, end, painter);
+            }
         }
-
     }
 
     private void handleRecentListClick(MouseEvent evt) {
-        try{
-        int index = recentList.locationToIndex(evt.getPoint());
+        try {
+            int index = recentList.locationToIndex(evt.getPoint());
 
-        if (index >= 0) {
-            History selectedHistory = getHistoryByIndex(recentListModel.size() - (index + 1));
 
-            // Create a new JDialog
-            JDialog advancedDialog = new JDialog(this, "Search History", true);
-            advancedDialog.setSize(500, 500);
-            advancedDialog.setLayout(new BorderLayout());
+            if (index >= 0) {
+                History selectedHistory = getHistoryByIndex(recentListModel.size() - (index + 1));
 
-            // Center the dialog on the screen
-            advancedDialog.setLocationRelativeTo(this);
-            JPanel contentPanel = new JPanel();
-            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+                // Create a new JDialog
+                JDialog advancedDialog = new JDialog(this, "Search History", true);
+                advancedDialog.setSize(500, 500);
+                advancedDialog.setLayout(new BorderLayout());
 
-            JLabel infoLabel = new JLabel(selectedHistory.toString());
-            infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            contentPanel.add(infoLabel);
-            contentPanel.add(Box.createVerticalStrut(20));
+                // Center the dialog on the screen
+                advancedDialog.setLocationRelativeTo(this);
+                JPanel contentPanel = new JPanel();
+                contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+                contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-            JButton okButton = new JButton("OK");
-            okButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-            okButton.addActionListener(event -> {
-                advancedDialog.dispose();
-            });
-            contentPanel.add(okButton);
-            advancedDialog.add(contentPanel, BorderLayout.CENTER);
-            if (isDarkMode) {
-                contentPanel.setBackground(DARK_PRIMARY_COLOR);
-                infoLabel.setBackground(DARK_PRIMARY_COLOR);
-                advancedDialog.setBackground(DARK_PRIMARY_COLOR);
-                okButton.setBackground(DARK_BUTTON_BACKGROUND);
-            } else {
-                contentPanel.setBackground(LIGHT_PRIMARY_COLOR);
-                infoLabel.setBackground(LIGHT_PRIMARY_COLOR);
-                advancedDialog.setBackground(LIGHT_PRIMARY_COLOR);
-                okButton.setBackground(LIGHT_BUTTON_BACKGROUND);
+                JLabel infoLabel = new JLabel(selectedHistory.toString());
+                infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contentPanel.add(infoLabel);
+                contentPanel.add(Box.createVerticalStrut(20));
+
+                JButton showAgainButton = new JButton("Show The Result Again");
+                showAgainButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+                showAgainButton.addActionListener(event -> {
+                    indexOfRecord = recordKeeper.size() - 1 - index;
+                    List<RecordKeeper> records = new ArrayList<>(recordKeeper);
+                    RecordKeeper record = records.get(indexOfRecord);
+                    try {
+                        SearchButtonHandler.displaySearchResults(record.getResults(), record.getTokens(), record.getLemmas(), record.getPosTags());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    advancedDialog.dispose();
+                });
+                contentPanel.add(showAgainButton);
+
+                advancedDialog.add(contentPanel, BorderLayout.CENTER);
+                if (isDarkMode) {
+                    contentPanel.setBackground(DARK_PRIMARY_COLOR);
+                    infoLabel.setBackground(DARK_PRIMARY_COLOR);
+                    advancedDialog.setBackground(DARK_PRIMARY_COLOR);
+                    showAgainButton.setBackground(DARK_BUTTON_BACKGROUND);
+                    showAgainButton.setForeground(DARK_FONT_COLOR);
+                    showAgainButton.setFont(BUTTON_FONT);
+                } else {
+                    contentPanel.setBackground(LIGHT_PRIMARY_COLOR);
+                    infoLabel.setBackground(LIGHT_PRIMARY_COLOR);
+                    advancedDialog.setBackground(LIGHT_PRIMARY_COLOR);
+                    showAgainButton.setBackground(LIGHT_BUTTON_BACKGROUND);
+                    showAgainButton.setForeground(LIGHT_FONT_COLOR);
+                    showAgainButton.setFont(BUTTON_FONT);
+                }
+                advancedDialog.setVisible(true);
             }
-            advancedDialog.setVisible(true);
-        }}catch(Exception e){
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error: something went wrong :( ", "Error", JOptionPane.ERROR_MESSAGE);
         }
+
+
     }
 
     private static void addRecentEntry(String entry) {
@@ -861,11 +893,13 @@ public class LinguaKWICGUI extends JFrame {
         }
     }
 
-    public static void addHistory(History history) {
+    public static void addHistory(History history, RecordKeeper record) {
         if (recentHistory.size() >= MAX_RECENT_ENTRIES) {
             recentHistory.poll();
+            recordKeeper.poll();
         }
         recentHistory.offer(history);
+        recordKeeper.offer(record);
     }
 
     private History getHistoryByIndex(int index) {
