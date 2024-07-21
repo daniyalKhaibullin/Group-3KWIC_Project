@@ -57,7 +57,7 @@ public class LinguaKWIC implements Serializable {
      * @param url The URL from which text content will be extracted and processed.
      * @throws IOException If there is an error in accessing or processing the URL content.
      */
-    public LinguaKWIC(String url) throws IOException {
+    public LinguaKWIC(String url) throws Exception {
         this.url = new URL(url);
         WikipediaScraper scraper = new WikipediaScraper(this.url.toString());
         if (!loadFromCache()) {
@@ -74,7 +74,7 @@ public class LinguaKWIC implements Serializable {
      * @param language The language of the Wikipedia article (e.g., "en" for English, "de" for German).
      * @throws IOException If there is an error in accessing or processing the Wikipedia content.
      */
-    public LinguaKWIC(String topic, String language) throws IOException {
+    public LinguaKWIC(String topic, String language) throws Exception {
         this.searchTopic = topic;
         this.lang = language;
         WikipediaScraper scraper = new WikipediaScraper(this.searchTopic, this.lang);
@@ -87,7 +87,7 @@ public class LinguaKWIC implements Serializable {
      *
      * @param fileName The local file containing text content to be processed.
      */
-    public LinguaKWIC(File fileName) {
+    public LinguaKWIC(File fileName) throws Exception {
         this.fileName = fileName;
         readFile(fileName.getAbsolutePath());
         process();
@@ -184,7 +184,7 @@ public class LinguaKWIC implements Serializable {
     /**
      * Loads NLP models and processes the text to extract sentences, tokens, POS tags, and lemmas.
      */
-    private void loadModelsAndProcessText() {
+    private void loadModelsAndProcessText() throws Exception {
         String lang = getLang(); // Ensure language is set properly
 
         try (InputStream sentenceModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-sent.bin"));
@@ -215,8 +215,6 @@ public class LinguaKWIC implements Serializable {
                 lemmas.add(lemmaList);
             }
 
-        } catch (Exception e) {
-            System.err.println("Error processing text" + e.getMessage());
         }
     }
 
@@ -232,19 +230,17 @@ public class LinguaKWIC implements Serializable {
      *
      * @param filePath The path of the file to read.
      */
-    public void readFile(String filePath) {
-        try {
-            byte[] bytes = Files.readAllBytes(Paths.get(filePath));
-            this.text = new String(bytes);
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-        }
+    public void readFile(String filePath) throws IOException {
+
+        byte[] bytes = Files.readAllBytes(Paths.get(filePath));
+        this.text = new String(bytes);
+
     }
 
     /**
      * Processes the text content to extract sentences, tokens, POS tags, and lemmas.
      */
-    private void process() {
+    private void process() throws Exception {
         detectLanguage();
         if (lang == null) {
             System.err.println("Language detection failed.");
@@ -268,7 +264,7 @@ public class LinguaKWIC implements Serializable {
     }
 
     // Testing the class functionalities (feel free to remove this in production)
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         File file = new File("aRandomText.txt");
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
 
