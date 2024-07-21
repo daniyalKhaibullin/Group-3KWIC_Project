@@ -43,7 +43,7 @@ public class LinguaKWICGUI extends JFrame {
     private static final Color DARK_FONT_COLOR = new Color(220, 220, 220); // Light gray
     private static final Color DARK_HIGHLIGHTER = new Color(40, 40, 40);
 
-    private static final Font FONT = new Font("Rockwell", Font.BOLD, 18);
+    private static final Font FONT = new Font("Phosphate", Font.BOLD, 18);
     private static final Font INPUT_FONT = new Font("Rockwell", Font.PLAIN, 15);
 
     private static Color highlighterColor;
@@ -627,113 +627,96 @@ public class LinguaKWICGUI extends JFrame {
         private void displaySearchResults(List<TextSearch.Pair> results, List<List<String>> tokens,
                                           List<List<String>> lemmas, List<List<String>> posTags) {
             if (results == null || results.isEmpty()) {
-                resultTextArea.setText("No results found.\n");
+                resultTextArea.append("No results found.");
                 return;
             }
 
-            // Sort results by sentence index and then by token index
-            results.sort(Comparator.comparingInt(TextSearch.Pair::getSentenceIndex)
-                    .thenComparingInt(TextSearch.Pair::getTokenIndex));
 
             Highlighter highlighter = resultTextArea.getHighlighter();
             Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(highlighterColor);
-            resultTextArea.setText(""); // Clear the text area before appending new results
-            highlighter.removeAllHighlights(); // Clear any previous highlights
 
-            // Inform the user about the total number of matches found
-            String matchInfo = results.size() + " match(es) found:\n\n";
-            resultTextArea.append(matchInfo);
+            resultTextArea.append(results.size() + " match(es) found:\n");
 
-            // Group results by sentence index
-            Map<Integer, List<Integer>> sentenceToTokensMap = new LinkedHashMap<>();
+
             for (TextSearch.Pair result : results) {
-                sentenceToTokensMap.computeIfAbsent(result.getSentenceIndex(), k -> new ArrayList<>()).add(result.getTokenIndex());
-            }
+                int sentenceIndex = result.getSentenceIndex();
+                int tokenIndex = result.getTokenIndex();
+                int start = 0;
+                int end = tokens.get(sentenceIndex).size();
+                int leftN;
+                int rightN;
 
-            StringBuilder fullText = new StringBuilder();
-            List<int[]> highlightPositions = new ArrayList<>();
-            int currentPos = matchInfo.length(); // Initial position in JTextArea
+                if (neighborRadioButton.isSelected()) {
+                    leftN = (int) neighborLeftSpinner.getValue();
+                    rightN = (int) neighborRightSpinner.getValue();
+                    start = Math.max(0, tokenIndex - rightN);
+                    end = Math.min(tokens.get(sentenceIndex).size(), tokenIndex + leftN + 1);
+                }
 
-            // Process each sentence with matches
-            for (Map.Entry<Integer, List<Integer>> entry : sentenceToTokensMap.entrySet()) {
-                int sentenceIndex = entry.getKey();
-                List<Integer> tokenIndices = entry.getValue();
 
-                if (sentenceIndex < tokens.size()) {
+                if (sentenceIndex < tokens.size() && tokenIndex < tokens.get(sentenceIndex).size()) {
+                    String token = tokens.get(sentenceIndex).get(tokenIndex);
+                    String lemma = lemmas.get(sentenceIndex).get(tokenIndex);
+                    String posTag = posTags.get(sentenceIndex).get(tokenIndex);
+
                     StringBuilder sentenceText = new StringBuilder("Sentence " + (sentenceIndex + 1) + ": ");
                     StringBuilder lemmaText = new StringBuilder("Lemmas: ");
                     StringBuilder posTagText = new StringBuilder("POS Tags: ");
 
-                    for (int i = 0; i < tokens.get(sentenceIndex).size(); i++) {
-                        if (tokenIndices.contains(i)) {
+
+                    for (int i = start; i < end; i++) {
+                        if(i== tokenIndex){
                             sentenceText.append("[[");
                             lemmaText.append("[[");
                             posTagText.append("[[");
                         }
-
                         sentenceText.append(tokens.get(sentenceIndex).get(i)).append(" ");
                         lemmaText.append(lemmas.get(sentenceIndex).get(i)).append(" ");
                         posTagText.append(posTags.get(sentenceIndex).get(i)).append(" ");
-
-                        if (tokenIndices.contains(i)) {
+                        if(i== tokenIndex){
                             sentenceText.append("]]");
                             lemmaText.append("]]");
                             posTagText.append("]]");
                         }
-                    }
 
+                    }
                     sentenceText.append("\n");
                     lemmaText.append("\n");
                     posTagText.append("\n\n");
 
-                    // Append texts and calculate positions for highlights
-                    int sentenceStartPos = currentPos;
+                    // Append the texts
+                    int sentenceStartPos = resultTextArea.getText().length();
                     resultTextArea.append(sentenceText.toString());
-                    currentPos += sentenceText.length();
 
-                    int lemmaStartPos = currentPos;
+                    int lemmaStartPos = resultTextArea.getText().length();
                     resultTextArea.append(lemmaText.toString());
-                    currentPos += lemmaText.length();
 
-                    int posTagStartPos = currentPos;
+                    int posTagStartPos = resultTextArea.getText().length();
                     resultTextArea.append(posTagText.toString());
-                    currentPos += posTagText.length();
 
-                    // Add highlights for each match
-                    for (int tokenIndex : tokenIndices) {
-                        int tokenStart = sentenceText.indexOf("[[") +2+ sentenceStartPos;
-                        int tokenEnd = sentenceText.indexOf("]]") + sentenceStartPos - 2; // -2 to remove the added brackets
-                        sentenceText.replace(sentenceText.indexOf("[["), sentenceText.indexOf("[[") + 2, ""); // Remove the opening brackets
-                        sentenceText.replace(sentenceText.indexOf("]]"), sentenceText.indexOf("]]") + 2, ""); // Remove the closing brackets
+                    resultTextArea.setCaretPosition(0);
+                    try {
 
-                        int lemmaTokenStart = lemmaText.indexOf("[[") + lemmaStartPos;
-                        int lemmaTokenEnd = lemmaText.indexOf("]]") + lemmaStartPos - 2;
-                        lemmaText.replace(lemmaText.indexOf("[["), lemmaText.indexOf("[[") + 2, "");
-                        lemmaText.replace(lemmaText.indexOf("]]"), lemmaText.indexOf("]]") + 2, "");
+                        // Highlight the word in the sentence
+                        int wordStart = sentenceStartPos + sentenceText.indexOf(token);
+                        int wordEnd = wordStart + token.length();
+                        highlighter.addHighlight(wordStart, wordEnd, painter);
 
-                        int posTagTokenStart = posTagText.indexOf("[[") + posTagStartPos;
-                        int posTagTokenEnd = posTagText.indexOf("]]") + posTagStartPos - 2;
-                        posTagText.replace(posTagText.indexOf("[["), posTagText.indexOf("[[") + 2, "");
-                        posTagText.replace(posTagText.indexOf("]]"), posTagText.indexOf("]]") + 2, "");
+                        // Highlight the corresponding lemma
+                        int lemmaStart = lemmaStartPos + lemmaText.indexOf(lemma);
+                        int lemmaEnd = lemmaStart + lemma.length();
+                        highlighter.addHighlight(lemmaStart, lemmaEnd, painter);
 
-                        highlightPositions.add(new int[]{tokenStart, tokenEnd});
-                        highlightPositions.add(new int[]{lemmaTokenStart, lemmaTokenEnd});
-                        highlightPositions.add(new int[]{posTagTokenStart, posTagTokenEnd});
+                        // Highlight the corresponding POS tag
+                        int posTagStart = posTagStartPos + posTagText.indexOf(posTag);
+                        int posTagEnd = posTagStart + posTag.length();
+                        highlighter.addHighlight(posTagStart, posTagEnd, painter);
+                    } catch (BadLocationException e) {
+                        JOptionPane.showMessageDialog(null, "Sorry, there was an issue displaying the search results \n due to a problem with the text position.", "Error", JOptionPane.ERROR_MESSAGE);
+
                     }
                 }
             }
-
-            // Calculate positions for highlighting
-            try {
-                for (int[] position : highlightPositions) {
-                    highlighter.addHighlight(position[0], position[1], painter);
-                }
-            } catch (BadLocationException e) {
-                JOptionPane.showMessageDialog(null, "Sorry, there was an issue displaying the search results \n due to a problem with the text position.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-
-            // Set the caret position to the beginning
-            resultTextArea.setCaretPosition(0);
         }
 
     }
