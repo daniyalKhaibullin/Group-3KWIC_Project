@@ -1,6 +1,8 @@
 package de.uni.tuebingen.sfs.java2;
 
 import lombok.Getter;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,13 +16,42 @@ public class RecordKeeper {
     private final List<List<String>> tokens;
     private final List<List<String>> lemmas;
     private final List<List<String>> posTags;
+    private final List<String> singleResult;
+    private final String target;
+    private final String searchString;
+    private final String type;
+
 
     public RecordKeeper(List<TextSearch.Pair> results, List<List<String>> tokens,
-                        List<List<String>> lemmas, List<List<String>> posTags) {
+                        List<List<String>> lemmas, List<List<String>> posTags,String target, String searchString, String type) {
         this.results = results;
-        this.tokens = tokens;
-        this.lemmas = lemmas;
-        this.posTags = posTags;
+        this.tokens = tokens != null ? tokens : new ArrayList<>();
+        this.lemmas = lemmas != null ? lemmas : new ArrayList<>();
+        this.posTags = posTags != null ? posTags : new ArrayList<>();
+        this.searchString = searchString;
+        this.type = type;
+        this.target=target;
+        this.singleResult = new ArrayList<>();
+
+        for (TextSearch.Pair result : results) {
+            assert tokens != null;
+            List<String> tokenList = tokens.get(result.getSentenceIndex());
+            assert lemmas != null;
+            List<String> lemmaList = lemmas.get(result.getSentenceIndex());
+            assert posTags != null;
+            List<String> posTagList = posTags.get(result.getSentenceIndex());
+
+            // Handle possible null lists
+            String tokenString = tokenList != null ? String.join(" ", tokenList) : "";
+            String lemmaString = lemmaList != null ? String.join(" ", lemmaList) : "";
+            String posTagString = posTagList != null ? String.join(" ", posTagList) : "";
+
+            String singleRes = "Sentence: " + tokenString + "\n" +
+                    "lemma: " + lemmaString + "\n" +
+                    "posTag: " + posTagString + "\n";
+
+            this.singleResult.add(singleRes);
+        }
     }
 
     @Override
@@ -41,12 +72,7 @@ public class RecordKeeper {
 
     @Override
     public String toString() {
-        return "RecordKeeper{" +
-                "results=" + results +
-                ", tokens=" + tokens +
-                ", lemmas=" + lemmas +
-                ", posTags=" + posTags +
-                '}';
+        return singleResult.toString();
     }
 }
 
