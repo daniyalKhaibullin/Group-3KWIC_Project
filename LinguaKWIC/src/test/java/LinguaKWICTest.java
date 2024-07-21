@@ -13,7 +13,7 @@ public class LinguaKWICTest {
 
     // Test case for processing text from a file
     @Test
-    public void testFileProcessing() {
+    public void testFileProcessing() throws Exception {
         File file = new File("aRandomText.txt"); // Provide a test file path
         LinguaKWIC linguaKWIC = new LinguaKWIC(file);
 
@@ -54,6 +54,8 @@ public class LinguaKWICTest {
             assertEquals("en", linguaKWIC.getLang()); // Assuming the Wikipedia page is in English
         } catch (IOException e) {
             fail("Exception thrown while testing URL processing: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
