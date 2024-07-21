@@ -415,16 +415,21 @@ public class LinguaKWICGUI extends JFrame {
     private class BrowseButtonHandler implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Create a new JFileChooser
-            JFileChooser fileChooser = new JFileChooser();
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
-            fileChooser.setFileFilter(filter);
-            fileChooser.setAcceptAllFileFilterUsed(false);
-            // Show the open dialog and get the user's response
-            int response = fileChooser.showOpenDialog(LinguaKWICGUI.this);
-            if (response == JFileChooser.APPROVE_OPTION) {
-                selectedFile = fileChooser.getSelectedFile();
-                searchField.setText(selectedFile.getName());
+            try {
+                // Create a new JFileChooser
+                JFileChooser fileChooser = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
+                fileChooser.setFileFilter(filter);
+                fileChooser.setAcceptAllFileFilterUsed(false);
+                // Show the open dialog and get the user's response
+                int response = fileChooser.showOpenDialog(LinguaKWICGUI.this);
+                if (response == JFileChooser.APPROVE_OPTION) {
+                    selectedFile = fileChooser.getSelectedFile();
+                    searchField.setText(selectedFile.getName());
+                }
+            }catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Error loading target: this file is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
+
             }
 
         }
@@ -487,6 +492,9 @@ public class LinguaKWICGUI extends JFrame {
                         lang = "de";
                     }
                     String url = "https://" + lang + ".wikipedia.org/wiki/" + searchTopic.replace(" ", "_");
+                    if(!isValidURL(url)){
+                        JOptionPane.showMessageDialog(null, "Error performing advanced search: couldn't find the topic", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                     searchField.setText(url);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Error performing advanced search: couldn't find the topic", "Error", JOptionPane.ERROR_MESSAGE);
@@ -561,7 +569,7 @@ public class LinguaKWICGUI extends JFrame {
                         linguaKWIC = new LinguaKWIC(filePathOrLink);
                     } catch (IOException ioe) {
                         ioe.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Error loading from URL", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "Error loading from URL : this URL is not valid", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } else if (filePathOrLink != null) {
@@ -789,6 +797,7 @@ public class LinguaKWICGUI extends JFrame {
     }
 
     private void handleRecentListClick(MouseEvent evt) {
+        try{
         int index = recentList.locationToIndex(evt.getPoint());
 
         if (index >= 0) {
@@ -829,6 +838,8 @@ public class LinguaKWICGUI extends JFrame {
                 okButton.setBackground(LIGHT_BUTTON_BACKGROUND);
             }
             advancedDialog.setVisible(true);
+        }}catch(Exception e){
+            JOptionPane.showMessageDialog(null, "Error: something went wrong :( ", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
