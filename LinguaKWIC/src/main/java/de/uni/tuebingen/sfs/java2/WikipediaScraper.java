@@ -1,13 +1,13 @@
 /**
  * Wikipedia Scraper - A class that enables users to easily scrape Wikipedia pages using JSoup.
  * This class abstracts away the complexity of interacting with JSoup documents, elements, etc.
- *
+ * <p>
  * Features:
  * - Connect to a Wikipedia page and scrape its contents.
  * - Extract main title and language of the Wikipedia page.
  * - Extract sections of the page including the main content.
  * - Extract text based on specific tags or classes.
- *
+ * <p>
  * Version: V1.3
  * Changes:
  * - Added a new constructor that takes a topic and language to generate the Wikipedia URL.
@@ -31,15 +31,20 @@ import java.util.List;
 import java.util.Scanner;
 
 public class WikipediaScraper {
-    @Getter @Setter
+    @Getter
+    @Setter
     private Document document;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String url;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String mainTitle;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String language;
-    @Getter @Setter
+    @Getter
+    @Setter
     private List<Section> sections;
 
     private static final HashMap<String, CachedContent> cache = new HashMap<>();
@@ -56,7 +61,7 @@ public class WikipediaScraper {
     }
 
     // New constructor generating URL from topic and language
-    public WikipediaScraper(String topic, String language) {
+    public WikipediaScraper(String topic, String language) throws IOException {
         this();
         this.url = generateWikipediaURL(topic, language);
         connectToWikipedia(this.url);
@@ -79,27 +84,25 @@ public class WikipediaScraper {
      *
      * @param url The URL of the Wikipedia page to scrape.
      */
-    public void connectToWikipedia(String url) {
+    public void connectToWikipedia(String url) throws IOException {
         this.url = url;
-        try {
-            // Check if the URL is already cached and the cache is not expired
-            if (cache.containsKey(url) && !cache.get(url).isExpired()) {
-                // Load from cache
-                CachedContent cachedContent = cache.get(url);
-                this.document = cachedContent.getDocument();
-                this.mainTitle = cachedContent.getMainTitle();
-                this.language = cachedContent.getLanguage();
-                this.sections = cachedContent.getSections();
-            } else {
-                // Connect and scrape the page if not cached
-                this.document = Jsoup.connect(url).get();
-                scrapeWikipedia();
-                // Store in cache
-                cache.put(url, new CachedContent(document, mainTitle, language, sections));
-            }
-        } catch (IOException e) {
-            System.err.println("Error connecting to Wikipedia: " + e.getMessage());
+
+        // Check if the URL is already cached and the cache is not expired
+        if (cache.containsKey(url) && !cache.get(url).isExpired()) {
+            // Load from cache
+            CachedContent cachedContent = cache.get(url);
+            this.document = cachedContent.getDocument();
+            this.mainTitle = cachedContent.getMainTitle();
+            this.language = cachedContent.getLanguage();
+            this.sections = cachedContent.getSections();
+        } else {
+            // Connect and scrape the page if not cached
+            this.document = Jsoup.connect(url).get();
+            scrapeWikipedia();
+            // Store in cache
+            cache.put(url, new CachedContent(document, mainTitle, language, sections));
         }
+
     }
 
     /**
@@ -216,7 +219,8 @@ public class WikipediaScraper {
     /**
      * Inner class to represent a section of the Wikipedia page.
      */
-    @Getter @Setter
+    @Getter
+    @Setter
     public static class Section {
         private String title;
         private List<String> paragraphs;
@@ -246,7 +250,8 @@ public class WikipediaScraper {
     /**
      * Inner class to represent cached content of a Wikipedia page.
      */
-    @Getter @Setter
+    @Getter
+    @Setter
     private static class CachedContent {
         private final Document document;
         private final String mainTitle;
