@@ -1,136 +1,105 @@
 package de.uni.tuebingen.sfs.java2;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import java.io.File;
-import java.util.ArrayList;
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLEventWriter;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
-@XmlRootElement(name = "searchresult")
-class SearchResult {
-    private String url;
-    private String searchTerm;
-    private List<Result> results;
-
-    @XmlAttribute(name = "url")
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    @XmlElement(name = "searchTerm")
-    public String getSearchTerm() {
-        return searchTerm;
-    }
-
-    public void setSearchTerm(String searchTerm) {
-        this.searchTerm = searchTerm;
-    }
-
-    @XmlElement(name = "results")
-    public List<Result> getResults() {
-        return results;
-    }
-
-    public void setResults(List<Result> results) {
-        this.results = results;
-    }
-}
-
-class Result {
-    private List<Token> tokens;
-
-    @XmlElement(name = "result")
-    public List<Token> getTokens() {
-        return tokens;
-    }
-
-    public void setTokens(List<Token> tokens) {
-        this.tokens = tokens;
-    }
-}
-
-class Token {
-    private String word;
-    private String lemma;
-    private String pos;
-
-    @XmlAttribute(name = "word")
-    public String getWord() {
-        return word;
-    }
-
-    public void setWord(String word) {
-        this.word = word;
-    }
-
-    @XmlAttribute(name = "lemma")
-    public String getLemma() {
-        return lemma;
-    }
-
-    public void setLemma(String lemma) {
-        this.lemma = lemma;
-    }
-
-    @XmlAttribute(name = "pos")
-    public String getPos() {
-        return pos;
-    }
-
-    public void setPos(String pos) {
-        this.pos = pos;
-    }
-}
-
+/**
+ * XMLWriter class, simplified version, uses the XML Structure of the document
+ * provided in the DSA II
+ *
+ * V1.4
+ *
+ * Example:
+ * // Get the search results
+ *                 List<TextSearch.Pair> results = linguaKWIC.getTextSearch().getLastSearchResults();
+ *                 List<List<String>> tokens = linguaKWIC.getTokens();
+ *                 List<List<String>> lemmas = linguaKWIC.getLemmas();
+ *                 List<List<String>> posTags = linguaKWIC.getPosTags();
+ *
+ *                 // Write the XML file
+ *                 XMLWriter xmlWriter = new XMLWriter();
+ *                 xmlWriter.writeXML(filePath, results, tokens, lemmas, posTags);
+ *
+ * Try to use that, see if it works
+ *
+ */
 public class XMLWriter {
 
-    public static void writeXML(String sessionId, String startTime, String endTime,
-                                String user, List<LinguaKWIC> uploadedTexts,
-                                List<LinguaKWIC> webScrapedArticles) {
-        try {
-            // Create JAXB context and initialize Marshaller
-            JAXBContext jaxbContext = JAXBContext.newInstance(SearchResult.class);
-            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+    public void writeXML(String filePath, List<TextSearch.Pair> results, List<List<String>> tokens, List<List<String>> lemmas, List<List<String>> posTags) throws XMLStreamException, IOException {
 
-            // Initialize search result object
-            SearchResult searchResult = new SearchResult();
-            searchResult.setUrl("aUrl");
-            searchResult.setSearchTerm("needle");
+        XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
+        OutputStream outputStream = new FileOutputStream(filePath);
+        XMLEventWriter eventWriter = outputFactory.createXMLEventWriter(outputStream);
+        XMLEventFactory eventFactory = XMLEventFactory.newInstance();
+        XMLEvent end = eventFactory.createDTD("\n");
 
-            // Convert LinguaKWIC objects to Result objects
-            List<Result> results = new ArrayList<>();
-            for (LinguaKWIC text : uploadedTexts) {
-                Result result = new Result();
-                List<Token> tokens = new ArrayList<>();
-                for (int i = 0; i < text.getTokens().size(); i++) {
-                    for (int j = 0; j < text.getTokens().get(i).size(); j++) {
-                        Token token = new Token();
-                        token.setWord(text.getTokens().get(i).get(j));
-                        token.setLemma(text.getLemmas().get(i).get(j));
-                        token.setPos(text.getPosTags().get(i).get(j));
-                        tokens.add(token);
-                    }
-                }
-                result.setTokens(tokens);
-                results.add(result);
-            }
-            searchResult.setResults(results);
+        // Start document
+        eventWriter.add(eventFactory.createStartDocument());
+        eventWriter.add(end);
 
-            // Write to file
-            File file = new File("xml_outputs/output_" + System.currentTimeMillis() + ".xml");
-            jaxbMarshaller.marshal(searchResult, file);
+        // Write the root element
+        eventWriter.add(eventFactory.createStartElement("", "", "searchresult"));
+        eventWriter.add(end);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        // Write the "from" element with a placeholder URL (you can modify this based on your requirements)
+        eventWriter.add(eventFactory.createStartElement("", "", "from"));
+        eventWriter.add(eventFactory.createAttribute("url", "aUrl"));
+        eventWriter.add(eventFactory.createEndElement("", "", "from"));
+        eventWriter.add(end);
+
+        // Write the "searchTerm" element with attributes (modify this based on your requirements)
+        eventWriter.add(eventFactory.createStartElement("", "", "searchTerm"));
+        eventWriter.add(eventFactory.createAttribute("value", "needle"));
+        eventWriter.add(eventFactory.createAttribute("type", "pos|lemma|word"));
+        eventWriter.add(eventFactory.createEndElement("", "", "searchTerm"));
+        eventWriter.add(end);
+
+        // Write the "results" element
+        eventWriter.add(eventFactory.createStartElement("", "", "results"));
+        eventWriter.add(end);
+
+        // Write individual "result" elements
+        for (TextSearch.Pair result : results) {
+            writeResult(eventWriter, eventFactory, end, tokens.get(result.getSentenceIndex()).get(result.getTokenIndex()), lemmas.get(result.getSentenceIndex()).get(result.getTokenIndex()), posTags.get(result.getSentenceIndex()).get(result.getTokenIndex()));
         }
+
+        // End "results" element
+        eventWriter.add(eventFactory.createEndElement("", "", "results"));
+        eventWriter.add(end);
+
+        // End root element
+        eventWriter.add(eventFactory.createEndElement("", "", "searchresult"));
+        eventWriter.add(end);
+
+        // End document
+        eventWriter.add(eventFactory.createEndDocument());
+
+        eventWriter.close();
+        outputStream.close();
+    }
+
+    private void writeResult(XMLEventWriter eventWriter, XMLEventFactory eventFactory, XMLEvent end, String word, String lemma, String pos) throws XMLStreamException {
+        // Write the "result" element
+        eventWriter.add(eventFactory.createStartElement("", "", "result"));
+        eventWriter.add(end);
+
+        // Write the "t" element with attributes
+        eventWriter.add(eventFactory.createStartElement("", "", "t"));
+        eventWriter.add(eventFactory.createAttribute("word", word));
+        eventWriter.add(eventFactory.createAttribute("lemma", lemma));
+        eventWriter.add(eventFactory.createAttribute("pos", pos));
+        eventWriter.add(eventFactory.createEndElement("", "", "t"));
+        eventWriter.add(end);
+
+        // End "result" element
+        eventWriter.add(eventFactory.createEndElement("", "", "result"));
+        eventWriter.add(end);
     }
 }
