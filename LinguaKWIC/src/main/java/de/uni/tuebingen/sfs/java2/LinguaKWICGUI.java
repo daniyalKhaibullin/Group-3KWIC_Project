@@ -634,7 +634,7 @@ public class LinguaKWICGUI extends JFrame {
                         linguaKWIC = new LinguaKWIC(selectedFile);
                     } catch (Exception t) {
                         t.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Error loading from file", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null, "Error loading from file. \n Please load the file with Brows button.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } else {
