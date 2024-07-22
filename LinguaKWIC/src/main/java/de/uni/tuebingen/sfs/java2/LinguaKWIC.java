@@ -187,14 +187,18 @@ public class LinguaKWIC implements Serializable {
     private void loadModelsAndProcessText() throws Exception {
         String lang = getLang(); // Ensure language is set properly
 
-        try (InputStream sentenceModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-sent.bin"));
-             InputStream tokenModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-token.bin"));
-             InputStream posModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-pos-maxent.bin"));
-             InputStream lemmaModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-lemmatizer.bin"))) {
+        try (InputStream sentenceModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-sent.bin");
+             InputStream tokenModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-token.bin");
+             InputStream posModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-pos-maxent.bin");
+             InputStream lemmaModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-lemmatizer.bin")) {
 
+            assert sentenceModelIn != null;
             SentenceDetectorME sentenceDetector = new SentenceDetectorME(new SentenceModel(sentenceModelIn));
+            assert tokenModelIn != null;
             Tokenizer tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
+            assert posModelIn != null;
             POSTaggerME posTagger = new POSTaggerME(new POSModel(posModelIn));
+            assert lemmaModelIn != null;
             LemmatizerME lemmatizer = new LemmatizerME(new LemmatizerModel(lemmaModelIn));
 
             String[] sentencesArray = sentenceDetector.sentDetect(getText());
