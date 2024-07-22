@@ -35,11 +35,13 @@ import java.util.List;
  */
 public class XMLWriter {
 
-    public void writeXML(String filePath, List<TextSearch.Pair> results, List<List<String>> tokens, List<List<String>> lemmas,
-                         List<List<String>> posTags, String target ,String needle, String type) throws XMLStreamException, IOException {
 
-        RecordKeeper record = new RecordKeeper(results, tokens, lemmas, posTags, target, needle,type);
-        List<String> theRecord = record.getSingleResult();
+    public void writeXML(String filePath, List<RecordKeeper> records) throws XMLStreamException, IOException {
+
+
+        // Create indentation strings
+        String indent1 = "  ";
+        String indent2 = indent1 + indent1;
 
         XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
         OutputStream outputStream = new FileOutputStream(filePath);
@@ -47,56 +49,66 @@ public class XMLWriter {
         XMLEventFactory eventFactory = XMLEventFactory.newInstance();
         XMLEvent end = eventFactory.createDTD("\n");
 
-        // Create indentation strings
-        String indent1 = "  ";
-        String indent2 = indent1 + indent1;
-
         // Start document
         eventWriter.add(eventFactory.createStartDocument());
         eventWriter.add(end);
 
-        // Write the root element
-        eventWriter.add(eventFactory.createStartElement("", "", "searchresult"));
-        eventWriter.add(end);
 
-        // Write the "from" element with a placeholder URL
-        eventWriter.add(eventFactory.createCharacters(indent1));
-        eventWriter.add(eventFactory.createStartElement("", "", "from"));
-        eventWriter.add(eventFactory.createAttribute("url", target));
-        eventWriter.add(eventFactory.createEndElement("", "", "from"));
-        eventWriter.add(end);
+        for (RecordKeeper record : records) {
 
-        // Write the "searchTerm" element manually as a self-closing tag
-        eventWriter.add(eventFactory.createCharacters(indent1));
-//        eventWriter.add(eventFactory.createCharacters("<searchTerm value=\"needle\" type=\"pos|lemma|word\"/>"));
-        eventWriter.add(eventFactory.createStartElement("", "", "searchTerm"));
-        eventWriter.add(eventFactory.createAttribute("value(s)", needle));
-        eventWriter.add(eventFactory.createAttribute("type", type));
-        eventWriter.add(eventFactory.createEndElement("", "", "searchTerm"));
-        eventWriter.add(end);
+            List<TextSearch.Pair> results = record.getResults();
+            List<List<String>> tokens = record.getTokens();
+            List<List<String>> lemmas = record.getLemmas();
+            List<List<String>> posTags = record.getPosTags();
+            List<String> singleResult = record.getSingleResult();
+            String target = record.getTarget();
+            String searchString = record.getSearchString();
+            String type = record.getType();
+            List<String> theRecord = singleResult;
+
+            // Write the root element
+            eventWriter.add(eventFactory.createStartElement("", "", "searchresult"));
+            eventWriter.add(end);
+
+            // Write the "from" element with a placeholder URL
+            eventWriter.add(eventFactory.createCharacters(indent1));
+            eventWriter.add(eventFactory.createStartElement("", "", "from"));
+            eventWriter.add(eventFactory.createAttribute("url", target));
+            eventWriter.add(eventFactory.createEndElement("", "", "from"));
+            eventWriter.add(end);
+
+            // Write the "searchTerm" element manually as a self-closing tag
+            eventWriter.add(eventFactory.createCharacters(indent1));
+            eventWriter.add(eventFactory.createStartElement("", "", "searchTerm"));
+            eventWriter.add(eventFactory.createAttribute("value(s)", searchString));
+            eventWriter.add(eventFactory.createAttribute("type", type));
+            eventWriter.add(eventFactory.createEndElement("", "", "searchTerm"));
+            eventWriter.add(end);
+
+            // Write the "results" element
+            eventWriter.add(eventFactory.createCharacters(indent1));
+            eventWriter.add(eventFactory.createStartElement("", "", "results"));
+            eventWriter.add(end);
+
+            int counter = 0;
+            // Write individual "result" elements
+            for (TextSearch.Pair result : results) {
+                writeResult(eventWriter, eventFactory, end, tokens.get(result.getSentenceIndex()).get(result.getTokenIndex()), lemmas.get(result.getSentenceIndex()).get(result.getTokenIndex()), posTags.get(result.getSentenceIndex()).get(result.getTokenIndex()), theRecord.get(counter), indent2);
+                counter++;
+            }
+
+            // End "results" element
+            eventWriter.add(eventFactory.createCharacters(indent1));
+            eventWriter.add(eventFactory.createEndElement("", "", "results"));
+            eventWriter.add(end);
+
+            // End root element
+            eventWriter.add(eventFactory.createCharacters(""));
+            eventWriter.add(eventFactory.createEndElement("", "", "searchresult"));
+            eventWriter.add(end);
 
 
-        // Write the "results" element
-        eventWriter.add(eventFactory.createCharacters(indent1));
-        eventWriter.add(eventFactory.createStartElement("", "", "results"));
-        eventWriter.add(end);
-
-        int counter = 0;
-        // Write individual "result" elements
-        for (TextSearch.Pair result : results) {
-            writeResult(eventWriter, eventFactory, end, tokens.get(result.getSentenceIndex()).get(result.getTokenIndex()), lemmas.get(result.getSentenceIndex()).get(result.getTokenIndex()), posTags.get(result.getSentenceIndex()).get(result.getTokenIndex()), theRecord.get(counter), indent2);
-            counter++;
         }
-
-        // End "results" element
-        eventWriter.add(eventFactory.createCharacters(indent1));
-        eventWriter.add(eventFactory.createEndElement("", "", "results"));
-        eventWriter.add(end);
-
-        // End root element
-        eventWriter.add(eventFactory.createCharacters(""));
-        eventWriter.add(eventFactory.createEndElement("", "", "searchresult"));
-        eventWriter.add(end);
 
         // End document
         eventWriter.add(eventFactory.createEndDocument());
