@@ -625,7 +625,7 @@ public class LinguaKWICGUI extends JFrame {
                     try {
                         linguaKWIC = new LinguaKWIC(filePathOrLink);
                     } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                        System.out.println("Error: " + ioe.getMessage());
                         JOptionPane.showMessageDialog(null, "Error loading from URL : this URL is not valid", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
@@ -705,6 +705,7 @@ public class LinguaKWICGUI extends JFrame {
                 displaySearchResults(NLPResults, tokens, lemmas, posTags);
                 indexOfRecord = recentHistory.size() - 1;
             } catch (Exception ex) {
+                System.out.println("Error: " + ex.getMessage());
                 JOptionPane.showMessageDialog(null, "Error loading data: this URL is not valid or doesnt have a content to analyse.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
