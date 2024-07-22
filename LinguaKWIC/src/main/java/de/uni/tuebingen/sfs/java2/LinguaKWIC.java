@@ -171,7 +171,8 @@ public class LinguaKWIC implements Serializable {
      * Detects the language of the input text.
      */
     private void detectLanguage() {
-        try (InputStream detectorModelIn = Files.newInputStream(Paths.get("langdetect-183.bin"))) {
+        try (InputStream detectorModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream("langdetect-183.bin")) {
+            assert detectorModelIn != null;
             LanguageDetectorModel model = new LanguageDetectorModel(detectorModelIn);
             LanguageDetectorME languageDetector = new LanguageDetectorME(model);
             Language bestLanguage = languageDetector.predictLanguage(this.text);
