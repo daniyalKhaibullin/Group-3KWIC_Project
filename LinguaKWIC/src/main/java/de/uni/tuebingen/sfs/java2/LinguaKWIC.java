@@ -171,8 +171,7 @@ public class LinguaKWIC implements Serializable {
      * Detects the language of the input text.
      */
     private void detectLanguage() {
-        try (InputStream detectorModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream("langdetect-183.bin")) {
-            assert detectorModelIn != null;
+        try (InputStream detectorModelIn = Files.newInputStream(Paths.get("langdetect-183.bin"))) {
             LanguageDetectorModel model = new LanguageDetectorModel(detectorModelIn);
             LanguageDetectorME languageDetector = new LanguageDetectorME(model);
             Language bestLanguage = languageDetector.predictLanguage(this.text);
@@ -188,18 +187,13 @@ public class LinguaKWIC implements Serializable {
     private void loadModelsAndProcessText() throws Exception {
         String lang = getLang(); // Ensure language is set properly
 
-        try (InputStream sentenceModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-sent.bin");
-             InputStream tokenModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-token.bin");
-             InputStream posModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-pos-maxent.bin");
-             InputStream lemmaModelIn = Thread.currentThread().getContextClassLoader().getResourceAsStream(lang + "/" + lang + "-lemmatizer.bin")) {
-
-            assert sentenceModelIn != null;
+        try (InputStream sentenceModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-sent.bin"));
+             InputStream tokenModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-token.bin"));
+             InputStream posModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-pos-maxent.bin"));
+             InputStream lemmaModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-lemmatizer.bin"))) {
             SentenceDetectorME sentenceDetector = new SentenceDetectorME(new SentenceModel(sentenceModelIn));
-            assert tokenModelIn != null;
             Tokenizer tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
-            assert posModelIn != null;
             POSTaggerME posTagger = new POSTaggerME(new POSModel(posModelIn));
-            assert lemmaModelIn != null;
             LemmatizerME lemmatizer = new LemmatizerME(new LemmatizerModel(lemmaModelIn));
 
             String[] sentencesArray = sentenceDetector.sentDetect(getText());
