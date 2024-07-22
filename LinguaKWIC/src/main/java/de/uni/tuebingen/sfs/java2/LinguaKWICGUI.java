@@ -11,7 +11,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -64,6 +63,7 @@ public class LinguaKWICGUI extends JFrame {
     static JSpinner neighborLeftSpinner;
     static JCheckBox caseSensitiveCheckBox;
     static JButton searchButton;
+    static JButton saveAll;
 
 
     static JButton saveButton;
@@ -76,8 +76,8 @@ public class LinguaKWICGUI extends JFrame {
     static DefaultListModel<String> recentListModel;
     static JList<String> recentList;
 
-    private static Queue<History> recentHistory = new ArrayDeque<>();
-    private static Queue<RecordKeeper> recordKeeper = new ArrayDeque<>();
+    private static final Queue<History> recentHistory = new ArrayDeque<>();
+    private static final Queue<RecordKeeper> recordKeeper = new ArrayDeque<>();
 
     //Panels
     public JPanel rootPanel = new JPanel(new BorderLayout());
@@ -150,8 +150,11 @@ public class LinguaKWICGUI extends JFrame {
         searchButton.addActionListener(new SearchButtonHandler());
 
         // South components
-        saveButton = new JButton("SAVE TO XML");
+        saveButton = new JButton("SAVE THIS SEARCH TO XML");
         saveButton.addActionListener(new SaveButtonHandler());
+
+        saveAll = new JButton("SAVE ALL HISTORY TO XML");
+        saveAll.addActionListener(new SaveAllButtonHandler());
 
         // Center component
         resultTextArea = new JTextArea();
@@ -251,6 +254,11 @@ public class LinguaKWICGUI extends JFrame {
         saveButton.setBackground(buttonBackground);
         saveButton.setForeground(fontColor);
         saveButton.setFont(BUTTON_FONT);
+
+
+        saveAll.setBackground(buttonBackground);
+        saveAll.setForeground(fontColor);
+        saveAll.setFont(BUTTON_FONT);
 
         // Apply colors and fonts to text area and list
         resultTextArea.setBackground(textAreaBackground);
@@ -404,7 +412,9 @@ public class LinguaKWICGUI extends JFrame {
 
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        bottomPanel.add(saveAll);
         bottomPanel.add(saveButton);
+
 
         rootPanel.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -489,7 +499,7 @@ public class LinguaKWICGUI extends JFrame {
             okButton.addActionListener(event -> {
                 try {
                     String searchTopic = topicField.getText();
-                    String lang = languageComboBox.getSelectedItem().toString();
+                    String lang = Objects.requireNonNull(languageComboBox.getSelectedItem()).toString();
                     if (lang.equals("English")) {
                         lang = "en";
                     } else {
@@ -532,6 +542,8 @@ public class LinguaKWICGUI extends JFrame {
         public void actionPerformed(ActionEvent e) {
             List<RecordKeeper> records = new ArrayList<>(recordKeeper);
             RecordKeeper record = records.get(indexOfRecord);
+            List<RecordKeeper> sendData = new ArrayList<>();
+            sendData.add(record);
 
             // Create a file chooser
             JFileChooser fileChooser = new JFileChooser();
@@ -557,7 +569,46 @@ public class LinguaKWICGUI extends JFrame {
                 // Call the writeXML method and handle exceptions
                 try {
                     XMLWriter writer = new XMLWriter();
-                    writer.writeXML(filePath, record.getResults(), record.getTokens(), record.getLemmas(), record.getPosTags(), record.getTarget(), record.getSearchString(), record.getType());
+                    writer.writeXML(filePath, sendData);
+                    JOptionPane.showMessageDialog(null, "File saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } catch (XMLStreamException | IOException ex) {
+                    JOptionPane.showMessageDialog(null, "Error saving file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+
+    private static class SaveAllButtonHandler implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            List<RecordKeeper> records = new ArrayList<>(recordKeeper);
+
+
+            // Create a file chooser
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save as XML");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            // Add a file filter to only show XML files
+            FileNameExtensionFilter xmlFilter = new FileNameExtensionFilter("XML files", "xml");
+            fileChooser.setFileFilter(xmlFilter);
+
+            // Show save dialog and get user selection
+            int userSelection = fileChooser.showSaveDialog(null);
+
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                String filePath = fileToSave.getAbsolutePath();
+
+                // Ensure the file has a .xml extension
+                if (!filePath.toLowerCase().endsWith(".xml")) {
+                    filePath += ".xml";
+                }
+
+                // Call the writeXML method and handle exceptions
+                try {
+                    XMLWriter writer = new XMLWriter();
+                    writer.writeXML(filePath,records);
                     JOptionPane.showMessageDialog(null, "File saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 } catch (XMLStreamException | IOException ex) {
                     JOptionPane.showMessageDialog(null, "Error saving file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -608,14 +659,14 @@ public class LinguaKWICGUI extends JFrame {
                 if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemmAndTag(token, lemma, posTag, caseSensitive);
                     History detail = new History(token + " " + lemma + " " + posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(), token + ", " + lemma + ", " + posTag, "word, pos, lemma");
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), token + ", " + lemma + ", " + posTag, "word, pos, lemma");
                     addHistory(detail, record);
                     addRecentEntry(token + " " + lemma + " " + posTag + "(in " + searchField.getText() + ")");
                 } else if (exactWordCheckBox.isSelected() && wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndLemm(token, lemma, caseSensitive);
                     addRecentEntry(token + " " + lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(token + " " + lemma, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  token + ", " + lemma, "word, lemma");
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), token + ", " + lemma, "word, lemma");
                     addHistory(detail, record);
                 } else if (exactWordCheckBox.isSelected() && wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTokenAndTag(token, posTag, caseSensitive);
@@ -633,19 +684,19 @@ public class LinguaKWICGUI extends JFrame {
                     NLPResults = linguaKWIC.getTextSearch().searchByToken(token, caseSensitive);
                     addRecentEntry(token + "(in " + searchField.getText() + ")");
                     History detail = new History(token, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  token, "word");
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), token, "word");
                     addHistory(detail, record);
                 } else if (wordLemmaCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByLemm(lemma, caseSensitive);
                     addRecentEntry(lemma + "(in " + searchField.getText() + ")");
                     History detail = new History(lemma, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  lemma, "lemma");
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), lemma, "lemma");
                     addHistory(detail, record);
                 } else if (wordPOSTagCheckBox.isSelected()) {
                     NLPResults = linguaKWIC.getTextSearch().searchByTag(posTag, caseSensitive);
                     addRecentEntry(posTag + "(in " + searchField.getText() + ")");
                     History detail = new History(posTag, searchField.getText(), NLPResults.size());
-                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags,searchField.getText(),  posTag, "pos");
+                    RecordKeeper record = new RecordKeeper(NLPResults, tokens, lemmas, posTags, searchField.getText(), posTag, "pos");
                     addHistory(detail, record);
                 }
 
