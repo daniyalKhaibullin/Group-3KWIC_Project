@@ -10,12 +10,13 @@ Welcome to LinguaKWIC! This handy tool helps you search and analyze linguistic d
 
 
 
+
 - **Advanced Search:** Search for tokens, lemmas, posTags, or a combination of them. You can even perform case-sensitive searches!
 
-
+![Screenshot from 2024-07-26 20-51-34](https://github.com/user-attachments/assets/0351a735-426c-4f2f-ac04-0bfdfd300e34)
 
 - **Context Customization:** Choose how much surrounding text (left and right neighbors) you want to see with your target term.
-
+file:///home/aida/Pictures/Screenshots/Screenshot%20from%202024-07-26%2020-52-47.png
 
 
 - **Search History:** We save your search history so you can revisit your past searches anytime.
