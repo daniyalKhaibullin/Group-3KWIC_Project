@@ -1,9 +1,8 @@
-# Group-3
+# Group-3 LinguaKWIC
 
-LinguaKWIC
 Welcome to LinguaKWIC! This handy tool helps you search and analyze linguistic data with ease. Whether you're working with English or German, LinguaKWIC has got you covered. Here’s a quick guide to get you started.
 
-Features
+#Features
 Browse Files: Easily browse and upload your files using the "Browse File" button.
 
 
