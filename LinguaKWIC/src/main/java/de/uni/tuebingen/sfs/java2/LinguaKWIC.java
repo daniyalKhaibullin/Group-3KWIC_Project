@@ -171,7 +171,10 @@ public class LinguaKWIC implements Serializable {
      * Detects the language of the input text.
      */
     private void detectLanguage() {
-        try (InputStream detectorModelIn = Files.newInputStream(Paths.get("langdetect-183.bin"))) {
+        try (InputStream detectorModelIn = getClass().getClassLoader().getResourceAsStream("langdetect-183.bin")) {
+            if (detectorModelIn == null) {
+                throw new FileNotFoundException("Model file not found: langdetect-183.bin");
+            }
             LanguageDetectorModel model = new LanguageDetectorModel(detectorModelIn);
             LanguageDetectorME languageDetector = new LanguageDetectorME(model);
             Language bestLanguage = languageDetector.predictLanguage(this.text);
@@ -187,10 +190,14 @@ public class LinguaKWIC implements Serializable {
     private void loadModelsAndProcessText() throws Exception {
         String lang = getLang(); // Ensure language is set properly
 
-        try (InputStream sentenceModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-sent.bin"));
-             InputStream tokenModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-token.bin"));
-             InputStream posModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-pos-maxent.bin"));
-             InputStream lemmaModelIn = Files.newInputStream(Paths.get(lang + "/" + lang + "-lemmatizer.bin"))) {
+        try (InputStream sentenceModelIn = getClass().getClassLoader().getResourceAsStream(lang + "/" + lang + "-sent.bin");
+             InputStream tokenModelIn = getClass().getClassLoader().getResourceAsStream(lang + "/" + lang + "-token.bin");
+             InputStream posModelIn = getClass().getClassLoader().getResourceAsStream(lang + "/" + lang + "-pos-maxent.bin");
+             InputStream lemmaModelIn = getClass().getClassLoader().getResourceAsStream(lang + "/" + lang + "-lemmatizer.bin")) {
+
+            if (sentenceModelIn == null || tokenModelIn == null || posModelIn == null || lemmaModelIn == null) {
+                throw new FileNotFoundException("One or more model files not found in resources.");
+            }
 
             SentenceDetectorME sentenceDetector = new SentenceDetectorME(new SentenceModel(sentenceModelIn));
             Tokenizer tokenizer = new TokenizerME(new TokenizerModel(tokenModelIn));
@@ -201,7 +208,6 @@ public class LinguaKWIC implements Serializable {
             this.sentences.addAll(Arrays.asList(sentencesArray));
 
             for (String sentence : sentencesArray) {
-
                 String[] sentenceTokens = tokenizer.tokenize(sentence);
                 String[] tags = posTagger.tag(sentenceTokens);
                 String[] lemmasArray = lemmatizer.lemmatize(sentenceTokens, tags);
@@ -215,6 +221,8 @@ public class LinguaKWIC implements Serializable {
                 lemmas.add(lemmaList);
             }
 
+        } catch (Exception e) {
+            System.err.println("Error loading models or processing text: " + e.getMessage());
         }
     }
 
