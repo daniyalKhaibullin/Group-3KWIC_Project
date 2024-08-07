@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KWICApplication>
+	<Session>
+	<SessionID>001</SessionID>
+	<StartTime>2024-07-19T12:00:00</StartTime>
+	<EndTime>2024-07-19T13:00:00</EndTime>
+	<User>JohnDoe</User>
+	<UploadedTexts>
+		<TextFile>
+		<FileName>aRandomText.txt</FileName>
+		<Content>Die Sonne strahlt hell am blauen Himmel. Ein leichter Wind streicht sanft über die grünen Wiesen. Vögel zwitschern fröhlich in den Bäumen und vereinzelt hört man das leise Summen von Bienen. Es ist ein friedlicher Tag, an dem die Natur in voller Pracht erstrahlt. Menschen spazieren gemütlich durch den Park, genießen die warmen Sonnenstrahlen und unterhalten sich angeregt. Kinder spielen vergnügt auf dem Spielplatz, während die Blumen ihre bunten Farben in die Welt streuen. Es ist ein Moment der Ruhe und Harmonie, der das Herz erfreut.
+</Content>
+		<LinguisticProcessing>
+			<Sentence>
+			<Text>Die Sonne strahlt hell am blauen Himmel</Text>
+			<Words>
+				<Word>
+				<Token>Die</Token>
+				<POS>NN</POS>
+				<Lemma>example</Lemma>
+				</Word>
+				<Word>
+				<Token>Sonne</Token>
+				<POS>VB</POS>
+				<Lemma>lemma</Lemma>
+				</Word>
+				<Word>
+				<Token>strahlt</Token>
+				<POS>DT</POS>
